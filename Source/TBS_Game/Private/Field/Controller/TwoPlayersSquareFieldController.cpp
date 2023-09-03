@@ -3,6 +3,11 @@
 #include "Utils/TwoDimArray/CellTwoDimArray.h"
 
 
+void ATwoPlayersSquareFieldController::InitField_Implementation()
+{
+	Cells = UCellTwoDimArray::New(Length, Width);
+}
+
 void ATwoPlayersSquareFieldController::GenerateField()
 {
 	Super::GenerateField_Implementation();
@@ -14,15 +19,16 @@ void ATwoPlayersSquareFieldController::GenerateField()
 		{
 			const int PcgSeed = FMath::RandRange(-1000000, 1000000);
 			const int PlayerOwnerIndex = (i < Length / 2) ? 0 : 1; 
-			SpawnCell(static_cast<ETerrainType>(TerrainTypeIndex), FHexagonLocation(i, j), PlayerOwnerIndex, 0, false, PcgSeed);
+			//SpawnCell(static_cast<ETerrainType>(TerrainTypeIndex), FHexagonLocation(i, j), PlayerOwnerIndex, 0, false, PcgSeed);
+
+			ACell* Cell = GetWorld()->SpawnActor<ACell>(GetCellClassByTerrainType(static_cast<ETerrainType>(TerrainTypeIndex)));
+			Cell->Owner = this;
+			Cell->Init(this, FHexagonLocation(i, j), PlayerOwnerIndex, 0, false, PcgSeed);
+			Cells->SetCell(FHexagonLocation(i, j), Cell);
+			
 			TerrainTypeIndex = (TerrainTypeIndex + 1) % static_cast<int>(ETerrainType::Count);
 		}
 	}
-}
-
-void ATwoPlayersSquareFieldController::InitField_Implementation()
-{
-	Cells = UCellTwoDimArray::New(Length, Width);
 }
 
 void ATwoPlayersSquareFieldController::SpawnCell_Implementation(const ETerrainType TerrainType, const FHexagonLocation Location,

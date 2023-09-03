@@ -11,7 +11,11 @@ class TBS_GAME_API ACell : public AFieldActor
 	GENERATED_BODY()
 
 public:
-	ACell() {}
+	ACell() 
+	{
+		bReplicates = true;
+		SetReplicateMovement(true);
+	}
 	void Init(AFieldController* Field, const FHexagonLocation Location, const int PlayerOwner,
 		const int Depth, const bool bHasWaterSource, const int PcgSeed);
 

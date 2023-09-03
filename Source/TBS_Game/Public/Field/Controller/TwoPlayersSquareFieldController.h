@@ -29,7 +29,7 @@ protected:
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
 	void InitField();
 	
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void SpawnCell(const ETerrainType TerrainType, const FHexagonLocation Location, const int PlayerOwner, const int Depth, const bool HasWaterSource, int PcgSeed);
 
 protected:
