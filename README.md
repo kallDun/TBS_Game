@@ -7,4 +7,6 @@ There are few ways to merge to git + svn:
 NOTE: If everything is fine -> merge to master branch
 2. If we have changes on svn -> we have to do changes in git and svn (merge both if it is possible - first - svn, second - git)
 NOTE: If server is off -> do PR/fork for git changes and wait for server ON
-3. If svn and git have changes -> first - update commit svn, second - merge git 
+3. If svn and git have changes -> first - update commit svn, second - merge git
+
+Every git & svn commit bundle must be followed with <need update svn!> message in a git commit.
