@@ -13,7 +13,17 @@
 AFieldController::AFieldController()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	State = EFieldControllerState::WaitingForPlayers;
+	bReplicates = true;
+}
+
+void AFieldController::BeginPlay()
+{
+	Super::BeginPlay();
+	if (HasAuthority())
+	{
+		InitializeEventSystem();
+		GenerateField();
+	}
 }
 
 
@@ -22,8 +32,11 @@ AFieldController::AFieldController()
 void AFieldController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME( AFieldController, State );
+	DOREPLIFETIME( AFieldController, TurnsOrderEventSystem );
+	DOREPLIFETIME( AFieldController, Cells );
+	DOREPLIFETIME( AFieldController, Players );
 	DOREPLIFETIME( AFieldController, Turn );
+	DOREPLIFETIME( AFieldController, State );
 }
 
 
@@ -31,37 +44,32 @@ void AFieldController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 void AFieldController::AddPlayerToList(AGamePlayerController* Player)
 {
-	Players.Add(Player);
-
-	const FString Message = FString::Printf(TEXT("Player %d is initialized. Total players = %d\nIsServer = %hs"),
-		Players.IndexOfByKey(Player), Players.Num(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Message);
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow,
-		FString::Printf(TEXT("FC Owner = %s"), *Owner.GetName()));
+	if (HasAuthority())
+	{
+		Players.Add(Player);
+	}
 }
 
 void AFieldController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (GetWorld()->GetNetMode() == NM_ListenServer)
+	/*if (GetWorld()->GetNetMode() == NM_ListenServer)
 	{
 		CheckForPlayersInitialize();
-	}
+	}*/
 }
 
 void AFieldController::CheckForPlayersInitialize()
 {
 	if (State == EFieldControllerState::WaitingForPlayers && IsAllPlayersInitialized())
 	{
-		InitializeEventSystem();
-		GenerateField();
-		InitializePlayers();
+		/*InitializeEventSystem();
+		GenerateField();*/
 		StartGame();
 	}
 }
 
-void AFieldController::InitializeEventSystem_Implementation()
+void AFieldController::InitializeEventSystem()
 {
 	TurnsOrderEventSystem = NewObject<UTurnsOrderEventSystem>(this);
 	TurnsOrderEventSystem->PlayerTurnEnded.AddDynamic(this, &AFieldController::PlayerTurnEndedEventHandler);
@@ -69,22 +77,6 @@ void AFieldController::InitializeEventSystem_Implementation()
 
 
 // -------------------------------- Main methods ----------------------------------
-
-void AFieldController::GenerateField_Implementation()
-{
-	const FString Message = FString::Printf(TEXT("Generate Field!\nIsServer = %hs"),
-			GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, Message);
-	State = EFieldControllerState::GeneratingField;
-}
-
-void AFieldController::InitializePlayers_Implementation()
-{	
-	for (int i = 0; i < Players.Num(); i++)
-	{
-		Players[i]->Init(i, GetPlayerCenterLocation(i));
-	}
-}
 
 void AFieldController::StartGame_Implementation()
 {

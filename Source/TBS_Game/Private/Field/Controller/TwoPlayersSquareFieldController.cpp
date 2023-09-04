@@ -3,16 +3,11 @@
 #include "Utils/TwoDimArray/CellTwoDimArray.h"
 
 
-void ATwoPlayersSquareFieldController::InitField_Implementation()
-{
-	Cells = UCellTwoDimArray::New(Length, Width);
-}
-
 void ATwoPlayersSquareFieldController::GenerateField()
 {
-	Super::GenerateField_Implementation();
 	int TerrainTypeIndex = 0;
-	InitField();
+	Cells = UCellTwoDimArray::New(Length, Width);
+	
 	for (int i = 0; i < Length; ++i)
 	{
 		for (int j = 0; j < Width; ++j)
@@ -29,14 +24,6 @@ void ATwoPlayersSquareFieldController::GenerateField()
 			TerrainTypeIndex = (TerrainTypeIndex + 1) % static_cast<int>(ETerrainType::Count);
 		}
 	}
-}
-
-void ATwoPlayersSquareFieldController::SpawnCell_Implementation(const ETerrainType TerrainType, const FHexagonLocation Location,
-                                                                const int PlayerOwner, const int Depth, const bool HasWaterSource, const int PcgSeed)
-{
-	ACell* Cell = GetWorld()->SpawnActor<ACell>(GetCellClassByTerrainType(TerrainType));
-	Cell->Init(this, Location, PlayerOwner, Depth, HasWaterSource, PcgSeed);
-	Cells->SetCell(Location, Cell);
 }
 
 FHexagonLocation ATwoPlayersSquareFieldController::GetPlayerCenterLocation(const int PlayerIndex) const

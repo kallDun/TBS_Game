@@ -98,7 +98,7 @@ protected:
 
 // Initialization
 public:
-	UFUNCTION(Client, Reliable)
+	UFUNCTION()
 	void Init(int PlayerNum, FHexagonLocation CenterHexLocation);
 	
 protected:	

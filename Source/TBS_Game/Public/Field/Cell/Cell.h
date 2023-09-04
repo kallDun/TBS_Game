@@ -11,16 +11,9 @@ class TBS_GAME_API ACell : public AFieldActor
 	GENERATED_BODY()
 
 public:
-	ACell() 
-	{
-		bReplicates = true;
-		SetReplicateMovement(true);
-	}
+	ACell();
 	void Init(AFieldController* Field, const FHexagonLocation Location, const int PlayerOwner,
 		const int Depth, const bool bHasWaterSource, const int PcgSeed);
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnCellInit();
 
 // Components
 protected:	

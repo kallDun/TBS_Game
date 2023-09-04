@@ -16,7 +16,7 @@
 AGamePlayerController::AGamePlayerController()
 {
 	bReplicates = true;
-	SetReplicatingMovement(true);
+	ACharacter::SetReplicateMovement(true);
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(RootComponent);
 	Camera->SetRelativeRotation(FRotator(-80, 0, 0));
@@ -29,18 +29,21 @@ void AGamePlayerController::BeginPlay()
 	const FString Message = FString::Printf(TEXT("AGamePlayerController BeginPlay, Owner = %s\nIsServer = %hs"),
 		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Message);
+
 	
 	if (AActor* GameState = UGameplayStatics::GetGameState(GetWorld()))
 	{
 		FieldController = Cast<AFieldController>(GameState);
 		if (FieldController)
 		{
+			const int Index = FieldController->GetPlayersCount();			
 			FieldController->AddPlayerToList(this);
+			if (Owner)
+			{
+				//SetInitializationStateLoaded();
+				Init(Index, FieldController->GetPlayerCenterLocation(Index));
+			}
 		}
-	}
-	if (Owner)
-	{
-		SetInitializationStateLoaded();
 	}
 }
 
@@ -68,7 +71,7 @@ void AGamePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 // -------------------------------- Initialization --------------------------------
 
-void AGamePlayerController::Init_Implementation(const int PlayerNum, const FHexagonLocation CenterHexLocation)
+void AGamePlayerController::Init(const int PlayerNum, const FHexagonLocation CenterHexLocation)
 {
 	InitPlayerNumberAndCenterLocation(PlayerNum, CenterHexLocation);
 	SetActorLocationAndRotation(CenterHexLocation, FRotator(0, 90, 0));
@@ -99,7 +102,7 @@ void AGamePlayerController::SetActorLocationAndRotation(const FHexagonLocation H
 			FieldController->GetHexagonSize(), FieldController->GetFieldCenter());
 	WorldLocation.Z = 5000;
 	SetActorLocationAndRotationServer(WorldLocation, WorldRotation);
-	GetPlayerController()->SetReplicateMovement(true);
+	//GetPlayerController()->SetReplicateMovement(true);
 	SetActorRotation(WorldRotation);
 }
 

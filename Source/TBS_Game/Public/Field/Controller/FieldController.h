@@ -61,13 +61,13 @@ private:
 
 // Properties
 protected:
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
 	UTurnsOrderEventSystem* TurnsOrderEventSystem;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
 	UCellTwoDimArray* Cells;	
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
 	TArray<AGamePlayerController*> Players = {};
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
@@ -117,18 +117,22 @@ public:
 	UFUNCTION()
 	void AddPlayerToList(AGamePlayerController* Player);
 
+	UFUNCTION(BlueprintCallable)
+	virtual FHexagonLocation GetPlayerCenterLocation(const int PlayerIndex) const { return FHexagonLocation(); }
+
 protected:
 	UFUNCTION(Server, Reliable)
 	virtual void StartGame();
 
-	UFUNCTION(Server, Reliable)
-	virtual void GenerateField();
-
-	UFUNCTION(Server, Reliable)
-	void InitializePlayers();
+	UFUNCTION()
+	virtual void GenerateField() {}
 
 protected:
-	virtual void Tick(float DeltaSeconds) override;	
+	virtual void Tick(float DeltaSeconds) override;
+
+	virtual void BeginPlay() override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	UFUNCTION()
 	void CheckForPlayersInitialize();
@@ -136,11 +140,8 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void NextTurn(AGamePlayerController* Player);
 	
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION()
 	void InitializeEventSystem();
-
-	UFUNCTION(BlueprintCallable)
-	virtual FHexagonLocation GetPlayerCenterLocation(const int PlayerIndex) const { return FHexagonLocation(); }
 
 // Auxiliary methods
 protected:
@@ -149,8 +150,6 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	bool IsAllPlayersInitialized() const;
-	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 // Event handlers
 private:

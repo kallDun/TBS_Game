@@ -2,16 +2,21 @@
 #include <Net/UnrealNetwork.h>
 
 
-void ACell::Init(AFieldController* Field, const FHexagonLocation InitLocation, const int PlayerOwner, const int InitDepth, const bool HasWaterSource, const int PcgSeed)
+ACell::ACell()
+{
+	bReplicates = true;
+	AActor::SetReplicateMovement(true);
+}
+
+void ACell::Init(AFieldController* Field, const FHexagonLocation InLocation, const int PlayerOwner, const int InDepth, const bool InHasWaterSource, const int PcgSeed)
 {
 	AGameActor::Init(Field);
 	PCGSeed = PcgSeed;
 	PlayerOwnerNumber = PlayerOwner;
-	Location = InitLocation;
-	Depth = InitDepth;
-	bHasWaterSource = HasWaterSource;
+	Location = InLocation;
+	Depth = InDepth;
+	bHasWaterSource = InHasWaterSource;
 	UpdateWorldLocation();
-	OnCellInit();
 }
 
 void ACell::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
