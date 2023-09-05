@@ -14,7 +14,7 @@ class TBS_GAME_API UCellTwoDimArray : public UObject
 	GENERATED_BODY()
 
 private:
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TArray<UCellOneDimArray*> Array = {};
 
 public:
@@ -66,5 +66,15 @@ public:
 		{
 			IteratorFunction.Execute(Index, Cell);
 		}));
+	}
+
+	__override virtual bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override
+	{
+		DOREPLIFETIME( UCellTwoDimArray, Array );
 	}
 };

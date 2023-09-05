@@ -73,7 +73,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
 	int Turn = 0;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated) // ---- DEPRECATED ----
 	EFieldControllerState State = EFieldControllerState::NotInitialized;
 
 // Getters
@@ -128,14 +128,11 @@ protected:
 	virtual void GenerateField() {}
 
 protected:
-	virtual void Tick(float DeltaSeconds) override;
-
 	virtual void BeginPlay() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-	UFUNCTION()
-	void CheckForPlayersInitialize();
+
+	virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
 
 	UFUNCTION(Server, Reliable)
 	void NextTurn(AGamePlayerController* Player);
@@ -147,9 +144,6 @@ protected:
 protected:
 	UFUNCTION(BlueprintCallable)
 	TSubclassOf<ACell> GetCellClassByTerrainType(const ETerrainType TerrainType) const;
-	
-	UFUNCTION(BlueprintCallable)
-	bool IsAllPlayersInitialized() const;
 	
 // Event handlers
 private:

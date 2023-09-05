@@ -34,11 +34,6 @@ protected:
 private:	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Input")
 	UInputMappingContext* PlayerInputMappingContext;
-	
-// Properties
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
-	EPlayerInitializationState InitializationState = EPlayerInitializationState::NotInitialized;
 
 // State
 public:
@@ -107,9 +102,6 @@ protected:
 	
 	UFUNCTION(Server, Reliable)
 	void InitPlayerNumberAndCenterLocation(int PlayerNum, FHexagonLocation HexagonLocation);
-	
-	UFUNCTION(Server, Reliable)
-	void SetInitializationStateLoaded();
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void InitBuildingPrefabs();

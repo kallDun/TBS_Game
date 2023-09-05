@@ -40,19 +40,10 @@ void AGamePlayerController::BeginPlay()
 			FieldController->AddPlayerToList(this);
 			if (Owner)
 			{
-				//SetInitializationStateLoaded();
 				Init(Index, FieldController->GetPlayerCenterLocation(Index));
 			}
 		}
 	}
-}
-
-void AGamePlayerController::SetInitializationStateLoaded_Implementation()
-{
-	InitializationState = EPlayerInitializationState::Loaded;
-	const FString Message = FString::Printf(TEXT("PlayerInitializationState::Loaded, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, Message);
 }
 
 
@@ -61,7 +52,6 @@ void AGamePlayerController::SetInitializationStateLoaded_Implementation()
 void AGamePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME( AGamePlayerController, InitializationState );
 	DOREPLIFETIME( AGamePlayerController, EconomicPoints );
 	DOREPLIFETIME( AGamePlayerController, ReligiousFollowers );
 	DOREPLIFETIME( AGamePlayerController, MovesLeft );
@@ -79,7 +69,6 @@ void AGamePlayerController::Init(const int PlayerNum, const FHexagonLocation Cen
 	InitBuildingPrefabs();
 	InitEventHandlersBP(FieldController->GetTurnsOrderEventSystem());
 	PlayerInitializedEvent.Broadcast();
-	InitializationState = EPlayerInitializationState::Initialized;
 
 	const FString Message2 = FString::Printf(TEXT("Player Init, Owner = %s\nIsServer = %hs"),
 		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
@@ -102,7 +91,7 @@ void AGamePlayerController::SetActorLocationAndRotation(const FHexagonLocation H
 			FieldController->GetHexagonSize(), FieldController->GetFieldCenter());
 	WorldLocation.Z = 5000;
 	SetActorLocationAndRotationServer(WorldLocation, WorldRotation);
-	//GetPlayerController()->SetReplicateMovement(true);
+	GetPlayerController()->SetReplicateMovement(true);
 	SetActorRotation(WorldRotation);
 }
 

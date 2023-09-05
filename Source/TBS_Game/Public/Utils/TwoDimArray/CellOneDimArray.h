@@ -1,4 +1,6 @@
 #pragma once
+#include <Net/UnrealNetwork.h>
+
 #include "CoreMinimal.h"
 #include <UObject/Object.h>
 #include "CellOneDimArray.generated.h"
@@ -11,7 +13,7 @@ class TBS_GAME_API UCellOneDimArray : public UObject
 	GENERATED_BODY()
 
 private:
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TArray<ACell*> Array = {};
 
 public:
@@ -39,5 +41,15 @@ public:
 	int GetLength() const
 	{
 		return Array.Num();
+	}
+
+	__override virtual bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override
+	{
+		DOREPLIFETIME( UCellOneDimArray, Array );
 	}
 };

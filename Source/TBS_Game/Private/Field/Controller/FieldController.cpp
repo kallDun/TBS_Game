@@ -1,11 +1,12 @@
 #include "Field/Controller//FieldController.h"
 
 #include <Net/UnrealNetwork.h>
-
 #include "Field/Cell/Cell.h"
 #include "Field/Cell/CellClassToTerrain.h"
 #include "Field/Controller/FieldControllerState.h"
 #include "Field/Event/TurnsOrderEventSystem.h"
+#include "Utils/TwoDimArray/CellTwoDimArray.h"
+#include "Engine/ActorChannel.h"
 
 
 // --------------------------------- Init methods ----------------------------------
@@ -26,6 +27,12 @@ void AFieldController::BeginPlay()
 	}
 }
 
+void AFieldController::InitializeEventSystem()
+{
+	TurnsOrderEventSystem = NewObject<UTurnsOrderEventSystem>(this);
+	TurnsOrderEventSystem->PlayerTurnEnded.AddDynamic(this, &AFieldController::PlayerTurnEndedEventHandler);
+}
+
 
 // -------------------------------- Network methods --------------------------------
 
@@ -39,40 +46,27 @@ void AFieldController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME( AFieldController, State );
 }
 
+bool AFieldController::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+	bWroteSomething |= Channel->ReplicateSubobject(Cells, *Bunch, *RepFlags);
+	return bWroteSomething;
+}
 
-// ---------------------------- Check connected players ----------------------------
+
+// ---------------------------- Add & Check connected players ----------------------------
 
 void AFieldController::AddPlayerToList(AGamePlayerController* Player)
 {
 	if (HasAuthority())
 	{
 		Players.Add(Player);
+
+		if (Players.Num() == PlayersCount)
+		{
+			StartGame();
+		}
 	}
-}
-
-void AFieldController::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-	/*if (GetWorld()->GetNetMode() == NM_ListenServer)
-	{
-		CheckForPlayersInitialize();
-	}*/
-}
-
-void AFieldController::CheckForPlayersInitialize()
-{
-	if (State == EFieldControllerState::WaitingForPlayers && IsAllPlayersInitialized())
-	{
-		/*InitializeEventSystem();
-		GenerateField();*/
-		StartGame();
-	}
-}
-
-void AFieldController::InitializeEventSystem()
-{
-	TurnsOrderEventSystem = NewObject<UTurnsOrderEventSystem>(this);
-	TurnsOrderEventSystem->PlayerTurnEnded.AddDynamic(this, &AFieldController::PlayerTurnEndedEventHandler);
 }
 
 
@@ -113,14 +107,4 @@ TSubclassOf<ACell> AFieldController::GetCellClassByTerrainType(const ETerrainTyp
 	}
 	const int RandomIndex = FMath::RandRange(0, ClassesWithNeedTerrain.Num() - 1);
 	return ClassesWithNeedTerrain[RandomIndex].CellClass;	
-}
-
-bool AFieldController::IsAllPlayersInitialized() const
-{
-	if (Players.Num() != GetPlayersCount()) return false;
-	for (const AGamePlayerController* Player : Players)
-	{
-		if (Player->InitializationState == EPlayerInitializationState::NotInitialized) return false;
-	}
-	return true;
 }

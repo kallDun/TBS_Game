@@ -13,8 +13,7 @@ void ATwoPlayersSquareFieldController::GenerateField()
 		for (int j = 0; j < Width; ++j)
 		{
 			const int PcgSeed = FMath::RandRange(-1000000, 1000000);
-			const int PlayerOwnerIndex = (i < Length / 2) ? 0 : 1; 
-			//SpawnCell(static_cast<ETerrainType>(TerrainTypeIndex), FHexagonLocation(i, j), PlayerOwnerIndex, 0, false, PcgSeed);
+			const int PlayerOwnerIndex = (i < Length / 2) ? 0 : 1; \
 
 			ACell* Cell = GetWorld()->SpawnActor<ACell>(GetCellClassByTerrainType(static_cast<ETerrainType>(TerrainTypeIndex)));
 			Cell->Owner = this;
