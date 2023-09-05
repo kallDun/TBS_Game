@@ -9,6 +9,7 @@
 void AUnitView::Init(AFieldController* Field, AUnit* UnitReference, const FHexagonLocation HexagonLocation)
 {
 	AGameActor::Init(Field);
+	Tags.Add("PCG_OBSTACLE");
 	SetOwner(UnitReference);
 	UnitRef = UnitReference;
 	Location = HexagonLocation;

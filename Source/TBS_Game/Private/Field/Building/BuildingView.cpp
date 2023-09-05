@@ -1,4 +1,6 @@
 #include "Field/Building/BuildingView.h"
+
+#include "NativeGameplayTags.h"
 #include "Field/Building/Building.h"
 #include "Field/Controller/FieldController.h"
 #include "Field/Event/TurnsOrderEventSystem.h"
@@ -7,6 +9,7 @@
 void ABuildingView::Init(AFieldController* Field, ABuilding* BuildingReference, const FHexagonLocation HexagonLocation, const bool IsMainBuildingView)
 {
 	AGameActor::Init(Field);
+	Tags.Add("PCG_OBSTACLE");
 	SetOwner(BuildingReference);
 	BuildingRef = BuildingReference;
 	Location = HexagonLocation;
