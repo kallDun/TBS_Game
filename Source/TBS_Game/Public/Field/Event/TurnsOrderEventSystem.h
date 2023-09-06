@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include <UObject/Object.h>
-
 #include "Field/Unit/UnitView.h"
 #include "Player/GamePlayerController.h"
 #include "TurnsOrderEventSystem.generated.h"
@@ -29,9 +28,6 @@ class TBS_GAME_API UTurnsOrderEventSystem final : public UObject
 public:
 	UPROPERTY(BlueprintAssignable)
 	FGameStarted GameStarted;
-
-	UPROPERTY(BlueprintAssignable)
-	FPlayerInitialize PlayerInitializeStarted;
 
 	UPROPERTY(BlueprintAssignable)
 	FPlayerInitialize PlayerInitializeFinished;

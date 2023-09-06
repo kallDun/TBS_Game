@@ -1,4 +1,7 @@
 #include "Field/Building/Building.h"
+
+#include <Net/UnrealNetwork.h>
+
 #include "Field/Anchor/CellParamsMap.h"
 #include "Field/Building/BuildingView.h"
 #include "Field/Building/UpgradeBuildingComponent.h"
@@ -12,11 +15,48 @@
 
 void ABuilding::Init(AFieldController* Field, AGamePlayerController* PlayerControllerOwner)
 {
-	SetOwner(PlayerControllerOwner);
 	PlayerControllerRef = PlayerControllerOwner;
 	AGameActor::Init(Field);
 }
 
+void ABuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	// General properties
+	DOREPLIFETIME( ABuilding, UpgradeBuildingComponents );
+	DOREPLIFETIME( ABuilding, BuildingName );
+	DOREPLIFETIME( ABuilding, BuildingType );
+	DOREPLIFETIME( ABuilding, BuildingViewClass );
+	DOREPLIFETIME( ABuilding, BuildingMeshRef );
+	DOREPLIFETIME( ABuilding, InitProperties );
+	DOREPLIFETIME( ABuilding, bCanBuildWithOtherBuildings );
+	DOREPLIFETIME( ABuilding, AffectingOnOtherBuildingImproveLevel );
+	DOREPLIFETIME( ABuilding, AnchorPoints );
+	DOREPLIFETIME( ABuilding, TerrainRules );
+	DOREPLIFETIME( ABuilding, InitMaxHitPoints );
+	DOREPLIFETIME( ABuilding, InitMaxCellCount );
+	DOREPLIFETIME( ABuilding, MovesToBuild );
+	DOREPLIFETIME( ABuilding, MovesToAssemble );
+	DOREPLIFETIME( ABuilding, BuildingIconMedium );
+	DOREPLIFETIME( ABuilding, BuildingDescription );
+	DOREPLIFETIME( ABuilding, BuildActionInfo );
+	DOREPLIFETIME( ABuilding, ImproveLevelFromLocationInfo );
+	DOREPLIFETIME( ABuilding, PropertyChangedFromImproveLevelInfo );
+	DOREPLIFETIME( ABuilding, LocationRequirementsToBuildInfo );
+	DOREPLIFETIME( ABuilding, MainRequirementsToBuildInfo );
+	DOREPLIFETIME( ABuilding, RequirementsToExpendCells );
+	// State properties
+	DOREPLIFETIME( ABuilding, PlayerControllerRef );
+	DOREPLIFETIME( ABuilding, BuildingState );
+	DOREPLIFETIME( ABuilding, CurrentLevel );
+	DOREPLIFETIME( ABuilding, MovesToBuildLeft );
+	DOREPLIFETIME( ABuilding, MovesToAssembleLeft );
+	DOREPLIFETIME( ABuilding, BuildingViews );
+	DOREPLIFETIME( ABuilding, PrefabViews );
+	DOREPLIFETIME( ABuilding, PrefabPreview );
+	DOREPLIFETIME( ABuilding, CellParamsMap );
+	DOREPLIFETIME( ABuilding, InitBuildingLocation );
+}
 
 // ----------------- Preview -----------------
 

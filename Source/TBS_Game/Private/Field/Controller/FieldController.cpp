@@ -1,10 +1,9 @@
 #include "Field/Controller//FieldController.h"
-
+#include "Field/Event/TurnsOrderEventSystem.h"
 #include <Net/UnrealNetwork.h>
 #include "Field/Cell/Cell.h"
 #include "Field/Cell/CellClassToTerrain.h"
 #include "Field/Controller/FieldControllerState.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
 #include "Utils/TwoDimArray/CellTwoDimArray.h"
 #include "Engine/ActorChannel.h"
 
@@ -13,7 +12,6 @@
 
 AFieldController::AFieldController()
 {
-	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 }
 
@@ -39,6 +37,18 @@ void AFieldController::InitializeEventSystem()
 void AFieldController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	// General
+	DOREPLIFETIME( AFieldController, HexagonSize );
+	DOREPLIFETIME( AFieldController, FieldCenter );
+	DOREPLIFETIME( AFieldController, DecreasingImproveLevelByRadius );
+	DOREPLIFETIME( AFieldController, PlayersCount );
+	DOREPLIFETIME( AFieldController, CellClasses );
+	DOREPLIFETIME( AFieldController, MovesPerTurn );
+	DOREPLIFETIME( AFieldController, BuildingClasses );
+	DOREPLIFETIME( AFieldController, MainBuildingClassIndex );
+	DOREPLIFETIME( AFieldController, UnitClasses );
+	DOREPLIFETIME( AFieldController, HeroClasses );
+	// State
 	DOREPLIFETIME( AFieldController, TurnsOrderEventSystem );
 	DOREPLIFETIME( AFieldController, Cells );
 	DOREPLIFETIME( AFieldController, Players );
@@ -61,7 +71,6 @@ void AFieldController::AddPlayerToList(AGamePlayerController* Player)
 	if (HasAuthority())
 	{
 		Players.Add(Player);
-
 		if (Players.Num() == PlayersCount)
 		{
 			StartGame();

@@ -1,15 +1,11 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "InputMappingContext.h"
-#include "PlayerInitializationState.h"
 #include "PlayerTurnType.h"
 #include "Field/GameActor.h"
 #include "Field/HexagonLocation.h"
-#include "Field/ReturnState/UnitUpgradeReturnState.h"
 #include "GameFramework/Character.h"
 #include "GamePlayerController.generated.h"
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerInitialized);
 
 class AFieldActor;
 class ATBS_GameModeBase;
@@ -37,35 +33,37 @@ private:
 
 // State
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	EPlayerTurnType PlayerTurnType = EPlayerTurnType::Waiting;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated, Category = "State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	FHexagonLocation CenterLocation;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated, Category = "State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	int EconomicPoints = 0;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated, Category = "State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	int ReligiousFollowers = 0;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated, Category = "State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	int PlayerNumber;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated, Category = "State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	int MovesLeft = 0;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	TArray<ABuilding*> BuildingPrefabs = {};
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
+	TArray<ABuilding*> Buildings = {};
+
+// --------------------------------- not implemented in BPs ----------------------------------
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
 	TArray<AUnit*> UnitPrefabs = {};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
 	TArray<AHero*> HeroPrefabs = {};
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
-	TArray<ABuilding*> Buildings = {};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
 	TArray<AUnit*> Units = {};
@@ -73,8 +71,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
 	AUnit* Hero;
 
-	UPROPERTY(BlueprintAssignable)
-	FPlayerInitialized PlayerInitializedEvent;
+// -------------------------------------------------------------------------------------------
 
 private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -92,38 +89,25 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 // Initialization
-public:
+protected:
 	UFUNCTION()
-	void Init(int PlayerNum, FHexagonLocation CenterHexLocation);
-	
-protected:	
-	UFUNCTION(BlueprintImplementableEvent)
-	void InitEventHandlersBP(class UTurnsOrderEventSystem* TurnsOrderEventSystem);
+	void Init(int Index);
 	
 	UFUNCTION(Server, Reliable)
-	void InitPlayerNumberAndCenterLocation(int PlayerNum, FHexagonLocation HexagonLocation);
+	void InitState(int PlayerNum, FHexagonLocation CenterHexLocation);
 	
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION(BlueprintImplementableEvent)
+	void SubscribeEventHandlersBP(class UTurnsOrderEventSystem* TurnsOrderEventSystem);
+	
+	UFUNCTION()
 	void InitBuildingPrefabs();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void InitUnitPrefabs();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void InitHeroPrefabs();
 
 	UFUNCTION()
 	ABuilding* InitBuildingPrefab(TSubclassOf<ABuilding> BuildingClass);
 
-	UFUNCTION()
-	AUnit* InitUnitPrefab(TSubclassOf<AUnit> UnitClass);
-
-	UFUNCTION()
-	AHero* InitHeroPrefab(TSubclassOf<AHero> HeroClass);
-	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void InitInputComponent();
-
+	
 	
 // Methods
 public:	
@@ -158,9 +142,6 @@ protected:
 // Actions
 	UFUNCTION(BlueprintCallable)
 	EBuildUpgradeReturnState ConstructBuilding(ABuilding* Building);
-
-	UFUNCTION(BlueprintCallable)
-	EUnitUpgradeReturnState ConstructUnit(AUnit* Unit);
 
 // Event handlers
 private:

@@ -1,4 +1,5 @@
 #include "Field/Building/BuildingView.h"
+#include <Net/UnrealNetwork.h>
 #include "Field/Building/Building.h"
 #include "Field/Controller/FieldController.h"
 #include "Field/Event/TurnsOrderEventSystem.h"
@@ -13,6 +14,18 @@ void ABuildingView::Init(AFieldController* Field, ABuilding* BuildingReference, 
 	bIsMainBuildingView = IsMainBuildingView;
 	UpdateWorldLocation();
 	OnInit();
+}
+
+void ABuildingView::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME( ABuildingView, bAutomaticallyEndPrePlayerMove );
+	DOREPLIFETIME( ABuildingView, bAutomaticallyEndPostPlayerMove );
+	DOREPLIFETIME( ABuildingView, bCanRotate );
+	DOREPLIFETIME( ABuildingView, BuildingRef );
+	DOREPLIFETIME( ABuildingView, bIsMainBuildingView );
+	DOREPLIFETIME( ABuildingView, CurrentHitPoints );
+	DOREPLIFETIME( ABuildingView, ViewState );
 }
 
 

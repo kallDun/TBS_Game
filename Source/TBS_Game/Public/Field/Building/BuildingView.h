@@ -13,7 +13,11 @@ class TBS_GAME_API ABuildingView : public AFieldActor
 	GENERATED_BODY()
 
 public:
-	ABuildingView() {}
+	ABuildingView()
+	{
+		bReplicates = true;
+		AActor::SetReplicateMovement(true);
+	}
 	void Init(AFieldController* Field, class ABuilding* BuildingReference, FHexagonLocation HexagonLocation, bool IsMainBuildingView);
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
@@ -21,25 +25,25 @@ public:
 	
 	// Current state properties
 protected:
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	bool bAutomaticallyEndPrePlayerMove = true;
 	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	bool bAutomaticallyEndPostPlayerMove = true;
 	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	bool bCanRotate = true;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	ABuilding* BuildingRef;
 
-	UPROPERTY(BlueprintGetter=IsMainBuildingView, BlueprintSetter=SetMainBuildingView, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintGetter=IsMainBuildingView, BlueprintSetter=SetMainBuildingView, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	bool bIsMainBuildingView;
 	
-	UPROPERTY(BlueprintGetter=GetCurrentHitPoints, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintGetter=GetCurrentHitPoints, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	float CurrentHitPoints;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	EBuildingViewState ViewState = EBuildingViewState::Initialize;
 
 	
@@ -82,6 +86,8 @@ public:
 	void RotateBuildingViewBP();
 	
 protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void PrePlayerMoveTickBP();
 	

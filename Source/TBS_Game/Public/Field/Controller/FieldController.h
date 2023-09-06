@@ -28,34 +28,34 @@ public:
 
 // Defaults properties
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Getter = GetHexagonSize, meta = (AllowPrivateAccess = "true", ClampMin = 0), Category = "Field Settings")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Getter = GetHexagonSize, meta = (AllowPrivateAccess = "true", ClampMin = 0), Category = "Field Settings", Replicated)
 	float HexagonSize;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Getter = GetFieldCenter, meta = (AllowPrivateAccess = "true"), Category = "Field Settings")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Getter = GetFieldCenter, meta = (AllowPrivateAccess = "true"), Category = "Field Settings", Replicated)
 	FVector FieldCenter;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Getter = GetDecreasingImproveLevelByRadius, meta = (AllowPrivateAccess = "true", ClampMin = 1), Category = "Field Settings")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Getter = GetDecreasingImproveLevelByRadius, meta = (AllowPrivateAccess = "true", ClampMin = 1), Category = "Field Settings", Replicated)
 	int DecreasingImproveLevelByRadius = 5;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Getter = GetPlayersCount, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 10), Category = "Field Settings")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Getter = GetPlayersCount, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 10), Category = "Field Settings", Replicated)
 	int PlayersCount = 2;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Field Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Field Settings", Replicated)
 	TArray<FCellClassToTerrain> CellClasses;
 
-	UPROPERTY(EditDefaultsOnly, Getter = GetMovesPerTurn, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 5), Category = "Player Settings")
+	UPROPERTY(EditDefaultsOnly, Getter = GetMovesPerTurn, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 5), Category = "Player Settings", Replicated)
 	int MovesPerTurn = 1;
 	
-	UPROPERTY(EditDefaultsOnly, Getter = GetBuildingClasses, meta = (AllowPrivateAccess = "true"), Category = "Player Settings")
+	UPROPERTY(EditDefaultsOnly, Getter = GetBuildingClasses, meta = (AllowPrivateAccess = "true"), Category = "Player Settings", Replicated)
 	TArray<TSubclassOf<ABuilding>> BuildingClasses;
 	
-	UPROPERTY(EditDefaultsOnly, Getter = GetMainBuildingClassIndex, meta = (AllowPrivateAccess = "true", ClampMin = 0), Category = "Player Settings")
+	UPROPERTY(EditDefaultsOnly, Getter = GetMainBuildingClassIndex, meta = (AllowPrivateAccess = "true", ClampMin = 0), Category = "Player Settings", Replicated)
 	int MainBuildingClassIndex = 0;
 	
-	UPROPERTY(EditDefaultsOnly, Getter = GetUnitClasses, meta = (AllowPrivateAccess = "true"), Category = "Player Settings")
+	UPROPERTY(EditDefaultsOnly, Getter = GetUnitClasses, meta = (AllowPrivateAccess = "true"), Category = "Player Settings", Replicated)
 	TArray<TSubclassOf<AUnit>> UnitClasses;
 
-	UPROPERTY(EditDefaultsOnly, Getter = GetHeroClasses, meta = (AllowPrivateAccess = "true"), Category = "Player Settings")
+	UPROPERTY(EditDefaultsOnly, Getter = GetHeroClasses, meta = (AllowPrivateAccess = "true"), Category = "Player Settings", Replicated)
 	TArray<TSubclassOf<AHero>> HeroClasses;
 
 

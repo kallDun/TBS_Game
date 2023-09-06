@@ -3,8 +3,6 @@
 #include "Camera/CameraComponent.h"
 #include "Field/FieldActor.h"
 #include "Field/Building/Building.h"
-#include "Field/Unit/Unit.h"
-#include "Field/Hero/Hero.h"
 #include "Field/Controller/FieldController.h"
 #include "Field/Event/TurnsOrderEventSystem.h"
 #include "Field/ReturnState/BuildUpgradeReturnState.h"
@@ -25,23 +23,14 @@ AGamePlayerController::AGamePlayerController()
 void AGamePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	const FString Message = FString::Printf(TEXT("AGamePlayerController BeginPlay, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Message);
-
-	
 	if (AActor* GameState = UGameplayStatics::GetGameState(GetWorld()))
 	{
-		FieldController = Cast<AFieldController>(GameState);
-		if (FieldController)
+		if (const auto Field = Cast<AFieldController>(GameState))
 		{
-			const int Index = FieldController->GetPlayersCount();			
-			FieldController->AddPlayerToList(this);
-			if (Owner)
-			{
-				Init(Index, FieldController->GetPlayerCenterLocation(Index));
-			}
+			FieldController = Field;
+			const int Index = Field->GetPlayersCount();
+			Field->AddPlayerToList(this);
+			if (Owner) Init(Index);
 		}
 	}
 }
@@ -52,37 +41,33 @@ void AGamePlayerController::BeginPlay()
 void AGamePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME( AGamePlayerController, PlayerTurnType );
+	DOREPLIFETIME( AGamePlayerController, CenterLocation );
 	DOREPLIFETIME( AGamePlayerController, EconomicPoints );
 	DOREPLIFETIME( AGamePlayerController, ReligiousFollowers );
-	DOREPLIFETIME( AGamePlayerController, MovesLeft );
 	DOREPLIFETIME( AGamePlayerController, PlayerNumber );
-	DOREPLIFETIME( AGamePlayerController, CenterLocation );
+	DOREPLIFETIME( AGamePlayerController, MovesLeft );
+	DOREPLIFETIME( AGamePlayerController, BuildingPrefabs );
+	DOREPLIFETIME( AGamePlayerController, Buildings );
 }
 
 // -------------------------------- Initialization --------------------------------
 
-void AGamePlayerController::Init(const int PlayerNum, const FHexagonLocation CenterHexLocation)
+void AGamePlayerController::Init(const int Index)
 {
-	InitPlayerNumberAndCenterLocation(PlayerNum, CenterHexLocation);
-	SetActorLocationAndRotation(CenterHexLocation, FRotator(0, 90, 0));
-	InitInputComponent();
-	InitBuildingPrefabs();
-	InitEventHandlersBP(FieldController->GetTurnsOrderEventSystem());
-	PlayerInitializedEvent.Broadcast();
-
-	const FString Message2 = FString::Printf(TEXT("Player Init, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Message2);
+	InitInputComponent(); // Client
+	SubscribeEventHandlersBP(FieldController->GetTurnsOrderEventSystem()); // Client
+	const FHexagonLocation CenterHexLocation = FieldController->GetPlayerCenterLocation(Index);
+	SetActorLocationAndRotation(CenterHexLocation, FRotator(0, 90, 0)); // Client
+	InitState(Index, CenterHexLocation); // Server
 }
 
-void AGamePlayerController::InitPlayerNumberAndCenterLocation_Implementation(const int PlayerNum, const FHexagonLocation HexagonLocation)
+void AGamePlayerController::InitState_Implementation(const int PlayerNum, const FHexagonLocation CenterHexLocation)
 {
 	PlayerNumber = PlayerNum;
-	CenterLocation = HexagonLocation;
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow,
-		FString::Printf(TEXT("PlayerNum = %d\nIsServer = %hs"),
-		PlayerNum, GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No"));
+	CenterLocation = CenterHexLocation;
+	InitBuildingPrefabs();
+	FieldController->GetTurnsOrderEventSystem()->PlayerInitializeFinished.Broadcast(this);
 }
 
 void AGamePlayerController::SetActorLocationAndRotation(const FHexagonLocation HexagonLocation, const FRotator& WorldRotation)
@@ -101,7 +86,7 @@ void AGamePlayerController::SetActorLocationAndRotationServer_Implementation(con
 	SetActorRotation(WorldRotation);
 }
 
-void AGamePlayerController::InitBuildingPrefabs_Implementation()
+void AGamePlayerController::InitBuildingPrefabs()
 {
 	TArray<TSubclassOf<ABuilding>> BuildingPrefabsClasses = FieldController->GetBuildingClasses();
 	for (const TSubclassOf<ABuilding> BuildingClass : BuildingPrefabsClasses)
@@ -110,45 +95,13 @@ void AGamePlayerController::InitBuildingPrefabs_Implementation()
 	}
 }
 
-void AGamePlayerController::InitUnitPrefabs_Implementation()
-{
-	TArray<TSubclassOf<AUnit>> UnitPrefabsClasses = FieldController->GetUnitClasses();
-	for (const TSubclassOf<AUnit> UnitClass : UnitPrefabsClasses)
-	{
-		UnitPrefabs.Add(InitUnitPrefab(UnitClass));
-	}
-}
-
-void AGamePlayerController::InitHeroPrefabs_Implementation()
-{
-	TArray<TSubclassOf<AHero>> HeroPrefabsClasses = FieldController->GetHeroClasses();
-	for (const TSubclassOf<AHero> HeroClass : HeroPrefabsClasses)
-	{
-		HeroPrefabs.Add(InitHeroPrefab(HeroClass));
-	}
-}
-
 ABuilding* AGamePlayerController::InitBuildingPrefab(const TSubclassOf<ABuilding> BuildingClass)
 {
 	ABuilding* BuildingPrefab = GetWorld()->SpawnActor<ABuilding>(BuildingClass);
 	BuildingPrefab->Init(FieldController, this);
+	BuildingPrefab->Owner = this;
 	return BuildingPrefab;
 }
-
-AUnit* AGamePlayerController::InitUnitPrefab(const TSubclassOf<AUnit> UnitClass)
-{
-	AUnit* UnitPrefab = GetWorld()->SpawnActor<AUnit>(UnitClass);
-	UnitPrefab->Init(FieldController, this);
-	return UnitPrefab;
-}
-
-AHero* AGamePlayerController::InitHeroPrefab(const TSubclassOf<AHero> HeroClass)
-{
-	AHero* HeroPrefab = GetWorld()->SpawnActor<AHero>(HeroClass);
-	HeroPrefab->Init(FieldController, this);
-	return HeroPrefab;
-}
-
 
 // -------------------------------- Player turn --------------------------------
 
@@ -311,22 +264,6 @@ EBuildUpgradeReturnState AGamePlayerController::ConstructBuilding(ABuilding* Bui
 		return ReturnState;
 	}
 	return EBuildUpgradeReturnState::Unknown;
-}
-
-EUnitUpgradeReturnState AGamePlayerController::ConstructUnit(AUnit* Unit)
-{
-	if (UnitPrefabs.Contains(Unit))
-	{
-		const EUnitUpgradeReturnState ReturnState = Unit->TryToBuild();
-		if (ReturnState == EUnitUpgradeReturnState::Succeeded)
-		{
-			UnitPrefabs.Remove(Unit);
-			Units.Add(Unit);
-			UnitPrefabs.Add(InitUnitPrefab(Unit->GetClass()));
-		}
-		return ReturnState;
-	}
-	return EUnitUpgradeReturnState::Unknown;
 }
 
 
