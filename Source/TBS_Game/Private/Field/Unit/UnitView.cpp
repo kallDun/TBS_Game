@@ -21,31 +21,26 @@ void AUnitView::Init(AFieldController* Field, AUnit* UnitReference, const FHexag
 
 void AUnitView::PrePlayerMoveTick()
 {
-	GetEventSystem()->UnitViewPreMoveStarted.Broadcast(this);
+	//GetEventSystem()->UnitViewPreMoveStarted.Broadcast(this);
 	PrePlayerMoveTickBP();
 	if (bAutomaticallyEndPrePlayerMove)
 	{
-		GetEventSystem()->UnitViewPreMoveEnded.Broadcast(this);
+		//GetEventSystem()->UnitViewPreMoveEnded.Broadcast(this);
 	}
 }
 
 void AUnitView::PostPlayerMoveTick()
 {
-	GetEventSystem()->UnitViewPostMoveStarted.Broadcast(this);
+	//GetEventSystem()->UnitViewPostMoveStarted.Broadcast(this);
 	PostPlayerMoveTickBP();
 	if (bAutomaticallyEndPostPlayerMove)
 	{
-		GetEventSystem()->UnitViewPostMoveEnded.Broadcast(this);
+		//GetEventSystem()->UnitViewPostMoveEnded.Broadcast(this);
 	}
 }
 
 
 // -------------------------------------  Getters  --------------------------------------------------
-
-UTurnsOrderEventSystem* AUnitView::GetEventSystem() const
-{
-	return UnitRef->GetFieldController()->GetTurnsOrderEventSystem();
-}
 
 bool AUnitView::IsPreviewState() const
 {

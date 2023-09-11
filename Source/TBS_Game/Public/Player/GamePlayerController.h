@@ -13,6 +13,9 @@ class AUnit;
 class AHero;
 class ABuilding;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerTurnChanged, EPlayerTurnType, TurnType);
+
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = (Player))
 class TBS_GAME_API AGamePlayerController : public ACharacter
 {
@@ -57,6 +60,36 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	TArray<ABuilding*> Buildings = {};
 
+// Events
+public:
+	UPROPERTY(BlueprintAssignable)
+	FPlayerEvent PlayerInitializeFinished;
+	
+	UPROPERTY(BlueprintAssignable)
+	FPlayerEvent PlayerTurnStarted;
+	
+	UPROPERTY(BlueprintAssignable)
+	FPlayerTurnChanged PlayerTurnTypeChanged;	
+
+	UPROPERTY(BlueprintAssignable)
+	FPlayerEvent PlayerTurnEnded;
+	
+	UPROPERTY(BlueprintAssignable)
+	FPlayerEvent PlayerUnitsMoveStarted;
+	
+	UPROPERTY(BlueprintAssignable)
+	FPlayerEvent PlayerUnitsMoveEnded;
+
+	UPROPERTY(BlueprintAssignable)
+	FPlayerEvent PlayerMoveStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FPlayerEvent PlayerMoveEnded;
+
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayerInitializeFinishedBroadcast();
+
 // --------------------------------- not implemented in BPs ----------------------------------
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
@@ -96,9 +129,6 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void InitState(int PlayerNum, FHexagonLocation CenterHexLocation);
 	
-	UFUNCTION(BlueprintImplementableEvent)
-	void SubscribeEventHandlersBP(class UTurnsOrderEventSystem* TurnsOrderEventSystem);
-	
 	UFUNCTION()
 	void InitBuildingPrefabs();
 
@@ -123,18 +153,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool CheckIfPlayerMove() const;
 
-protected:	
-	UFUNCTION()
-	void StartBuildingsAssembling();
-
+protected:
 	UFUNCTION()
 	void StartPlayersMove();
-
-	UFUNCTION()
-	void StartBuildingsPreMove();
-	
-	UFUNCTION()
-	void StartBuildingsPostMove();
 	
 	UFUNCTION()
 	void EndTurn();
@@ -147,18 +168,6 @@ protected:
 private:
 	UPROPERTY()
 	int BuildingMoveCalledCount = 0;
-
-	UFUNCTION()
-	void DoNextBuildingPreMove();
-	
-	UFUNCTION()
-	void DoNextBuildingPostMove();
-	
-	UFUNCTION()
-	void BuildingPreMoveEndedEventHandler(ABuilding* Building);
-
-	UFUNCTION()
-	void BuildingPostMoveEndedEventHandler(ABuilding* Building);
 	
 // Auxiliary
 protected:

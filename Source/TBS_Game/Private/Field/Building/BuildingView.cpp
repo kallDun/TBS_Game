@@ -33,31 +33,26 @@ void ABuildingView::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 
 void ABuildingView::PrePlayerMoveTick()
 {
-	GetEventSystem()->BuildingViewPreMoveStarted.Broadcast(this);
+	BuildingRef->BuildingViewPreMoveStarted.Broadcast(this);
 	PrePlayerMoveTickBP();
 	if (bAutomaticallyEndPrePlayerMove)
 	{
-		GetEventSystem()->BuildingViewPreMoveEnded.Broadcast(this);
+		BuildingRef->BuildingViewPreMoveEnded.Broadcast(this);
 	}
 }
 
 void ABuildingView::PostPlayerMoveTick()
 {
-	GetEventSystem()->BuildingViewPostMoveStarted.Broadcast(this);
+	BuildingRef->BuildingViewPostMoveStarted.Broadcast(this);
 	PostPlayerMoveTickBP();
 	if (bAutomaticallyEndPostPlayerMove)
 	{
-		GetEventSystem()->BuildingViewPostMoveEnded.Broadcast(this);
+		BuildingRef->BuildingViewPostMoveEnded.Broadcast(this);
 	}
 }
 
 
 // -------------------------------------  Getters  --------------------------------------------------
-
-UTurnsOrderEventSystem* ABuildingView::GetEventSystem() const
-{
-	return BuildingRef->GetFieldController()->GetTurnsOrderEventSystem();
-}
 
 bool ABuildingView::IsPreviewState() const
 {

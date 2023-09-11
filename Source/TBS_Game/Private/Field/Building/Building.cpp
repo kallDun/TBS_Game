@@ -383,7 +383,7 @@ bool ABuilding::CanExpendLocation(const FHexagonLocation HexagonLocation) const
 
 void ABuilding::PrePlayerMoveTick_Implementation()
 {
-	FieldController->GetTurnsOrderEventSystem()->BuildingPreMoveStarted.Broadcast(this);
+	BuildingPreMoveStarted.Broadcast();
 	if (BuildingState != EBuildingState::Initialized)
 	{
 		for (UUpgradeBuildingComponent* Upgrade : UpgradeBuildingComponents)
@@ -391,19 +391,19 @@ void ABuilding::PrePlayerMoveTick_Implementation()
 			Upgrade->PrePlayerMoveTick();
 		}
 
-		FieldController->GetTurnsOrderEventSystem()->BuildingViewPreMoveEnded.AddDynamic(this, &ABuilding::BuildingViewPreMoveEndedEventHandler);
+		BuildingViewPreMoveEnded.AddDynamic(this, &ABuilding::BuildingViewPreMoveEndedEventHandler);
 		BuildingViewMoveCalledCount = 0;
 		DoNextBuildingViewMove(true);
 	}
 	else
 	{
-		FieldController->GetTurnsOrderEventSystem()->BuildingPreMoveEnded.Broadcast(this);
+		BuildingPreMoveEnded.Broadcast();
 	}
 }
 
 void ABuilding::PostPlayerMoveTick_Implementation()
 {
-	FieldController->GetTurnsOrderEventSystem()->BuildingPostMoveStarted.Broadcast(this);
+	BuildingPostMoveStarted.Broadcast();
 	if (BuildingState != EBuildingState::Initialized)
 	{
 		for (UUpgradeBuildingComponent* Upgrade : UpgradeBuildingComponents)
@@ -411,13 +411,13 @@ void ABuilding::PostPlayerMoveTick_Implementation()
 			Upgrade->PostPlayerMoveTick();
 		}
 
-		FieldController->GetTurnsOrderEventSystem()->BuildingViewPostMoveEnded.AddDynamic(this, &ABuilding::BuildingViewPostMoveEndedEventHandler);
+		BuildingViewPostMoveEnded.AddDynamic(this, &ABuilding::BuildingViewPostMoveEndedEventHandler);
 		BuildingViewMoveCalledCount = 0;
 		DoNextBuildingViewMove(false);
 	}
 	else
 	{
-		FieldController->GetTurnsOrderEventSystem()->BuildingPostMoveEnded.Broadcast(this);
+		BuildingPostMoveEnded.Broadcast();
 	}
 }
 
@@ -446,9 +446,9 @@ void ABuilding::DoNextBuildingViewMove(const bool bIsPreMove)
 {
 	if (BuildingViewMoveCalledCount == BuildingViews.Num())
 	{
-		FieldController->GetTurnsOrderEventSystem()->BuildingViewPreMoveEnded.RemoveDynamic(this, &ABuilding::BuildingViewPreMoveEndedEventHandler);
-		if (bIsPreMove) FieldController->GetTurnsOrderEventSystem()->BuildingPreMoveEnded.Broadcast(this);
-		else FieldController->GetTurnsOrderEventSystem()->BuildingPostMoveEnded.Broadcast(this);
+		BuildingViewPreMoveEnded.RemoveDynamic(this, &ABuilding::BuildingViewPreMoveEndedEventHandler);
+		if (bIsPreMove) BuildingPreMoveEnded.Broadcast();
+		else BuildingPostMoveEnded.Broadcast();
 	}
 	else
 	{

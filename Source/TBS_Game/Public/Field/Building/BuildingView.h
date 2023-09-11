@@ -53,9 +53,6 @@ public:
 	float GetCurrentHitPoints() const { return CurrentHitPoints; }
 
 	UFUNCTION(BlueprintGetter)
-	class UTurnsOrderEventSystem* GetEventSystem() const;
-
-	UFUNCTION(BlueprintGetter)
 	ABuilding* GetBuildingRef() const { return BuildingRef; }
 	
 	UFUNCTION(BlueprintGetter)

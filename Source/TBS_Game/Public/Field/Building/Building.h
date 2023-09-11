@@ -18,6 +18,9 @@ enum class EBuildingPlacementReturnState : uint8;
 enum class EBuildUpgradeReturnState : uint8;
 enum class EBuildingViewState : uint8;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBuildingViewEvent, ABuildingView*, BuildingView);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBuildingEvent);
+
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = (Building))
 class TBS_GAME_API ABuilding : public AGameActor
 {
@@ -130,6 +133,31 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	FHexagonLocation InitBuildingLocation;
+
+	// events
+	UPROPERTY(BlueprintAssignable)
+	FBuildingViewEvent BuildingViewPreMoveStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FBuildingViewEvent BuildingViewPreMoveEnded;
+	
+	UPROPERTY(BlueprintAssignable)
+	FBuildingViewEvent BuildingViewPostMoveStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FBuildingViewEvent BuildingViewPostMoveEnded;
+	
+	UPROPERTY(BlueprintAssignable)
+	FBuildingEvent BuildingPreMoveStarted;
+	
+	UPROPERTY(BlueprintAssignable)
+	FBuildingEvent BuildingPreMoveEnded;
+	
+	UPROPERTY(BlueprintAssignable)
+	FBuildingEvent BuildingPostMoveStarted;
+	
+	UPROPERTY(BlueprintAssignable)
+	FBuildingEvent BuildingPostMoveEnded;
 
 // getters
 public:

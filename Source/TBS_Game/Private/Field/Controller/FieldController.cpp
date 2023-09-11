@@ -20,15 +20,8 @@ void AFieldController::BeginPlay()
 	Super::BeginPlay();
 	if (HasAuthority())
 	{
-		InitializeEventSystem();
 		GenerateField();
 	}
-}
-
-void AFieldController::InitializeEventSystem()
-{
-	TurnsOrderEventSystem = NewObject<UTurnsOrderEventSystem>(this);
-	TurnsOrderEventSystem->PlayerTurnEnded.AddDynamic(this, &AFieldController::PlayerTurnEndedEventHandler);
 }
 
 
@@ -49,7 +42,6 @@ void AFieldController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME( AFieldController, UnitClasses );
 	DOREPLIFETIME( AFieldController, HeroClasses );
 	// State
-	DOREPLIFETIME( AFieldController, TurnsOrderEventSystem );
 	DOREPLIFETIME( AFieldController, Cells );
 	DOREPLIFETIME( AFieldController, Players );
 	DOREPLIFETIME( AFieldController, Turn );

@@ -4,7 +4,6 @@
 #include "Field/FieldActor.h"
 #include "Field/Building/Building.h"
 #include "Field/Controller/FieldController.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
 #include "Field/ReturnState/BuildUpgradeReturnState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -56,7 +55,6 @@ void AGamePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 void AGamePlayerController::Init(const int Index)
 {
 	InitInputComponent(); // Client
-	SubscribeEventHandlersBP(FieldController->GetTurnsOrderEventSystem()); // Client
 	const FHexagonLocation CenterHexLocation = FieldController->GetPlayerCenterLocation(Index);
 	SetActorLocationAndRotation(CenterHexLocation, FRotator(0, 90, 0)); // Client
 	InitState(Index, CenterHexLocation); // Server
@@ -67,7 +65,7 @@ void AGamePlayerController::InitState_Implementation(const int PlayerNum, const 
 	PlayerNumber = PlayerNum;
 	CenterLocation = CenterHexLocation;
 	InitBuildingPrefabs();
-	FieldController->GetTurnsOrderEventSystem()->PlayerInitializeFinished.Broadcast(this);
+	PlayerInitializeFinishedBroadcast();
 }
 
 void AGamePlayerController::SetActorLocationAndRotation(const FHexagonLocation HexagonLocation, const FRotator& WorldRotation)
@@ -103,11 +101,19 @@ ABuilding* AGamePlayerController::InitBuildingPrefab(const TSubclassOf<ABuilding
 	return BuildingPrefab;
 }
 
+// ----------------------------------- Events ----------------------------------
+
+void AGamePlayerController::PlayerInitializeFinishedBroadcast_Implementation()
+{
+	PlayerInitializeFinished.Broadcast();
+}
+
+
 // -------------------------------- Player turn --------------------------------
 
 void AGamePlayerController::StartTurn_Implementation()
 {
-	FieldController->GetTurnsOrderEventSystem()->PlayerTurnStarted.Broadcast(this);
+	PlayerTurnStarted.Broadcast();
 	MovesLeft = FieldController->GetMovesPerTurn();
 	// TODO: add realization for units move
 	// TODO: add realization for check win condition
@@ -116,13 +122,13 @@ void AGamePlayerController::StartTurn_Implementation()
 		TEXT("StartTurn, Owner = %s\nIsServer = %hs"),
 		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No"));
 	
-	StartBuildingsAssembling();
+	//StartBuildingsAssembling();
 }
 
 void AGamePlayerController::EndTurn()
 {
 	SetPlayerTurnType(EPlayerTurnType::Waiting);	
-	FieldController->GetTurnsOrderEventSystem()->PlayerTurnEnded.Broadcast(this);
+	PlayerTurnEnded.Broadcast();
 }
 
 bool AGamePlayerController::CanUseMove() const
@@ -137,7 +143,7 @@ bool AGamePlayerController::TryToUseMove()
 		MovesLeft--;
 		if (MovesLeft == 0)
 		{
-			StartBuildingsPostMove();
+			//StartBuildingsPostMove();
 		}
 		return true;
 	}
@@ -152,7 +158,7 @@ void AGamePlayerController::StartPlayersMove()
 	SetPlayerTurnType(EPlayerTurnType::PlayerMove);
 }
 
-void AGamePlayerController::StartBuildingsAssembling()
+/*void AGamePlayerController::StartBuildingsAssembling()
 {
 	SetPlayerTurnType(EPlayerTurnType::BuildingsAssembling);
 	
@@ -234,11 +240,11 @@ void AGamePlayerController::BuildingPostMoveEndedEventHandler(ABuilding* Buildin
 		BuildingMoveCalledCount++;
 		DoNextBuildingPostMove();
 	}
-}
+}*/
 
 void AGamePlayerController::SetPlayerTurnType(const EPlayerTurnType NewPlayerTurnType)
 {
-	FieldController->GetTurnsOrderEventSystem()->PlayerTurnTypeChanged.Broadcast(this, NewPlayerTurnType);
+	PlayerTurnTypeChanged.Broadcast(NewPlayerTurnType);
 	PlayerTurnType = NewPlayerTurnType;
 }
 
@@ -303,4 +309,3 @@ AActor* AGamePlayerController::GetActorUnderCursor() const
 	}
 	return nullptr;
 }
-

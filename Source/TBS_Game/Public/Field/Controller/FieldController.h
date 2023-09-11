@@ -60,10 +60,7 @@ private:
 
 
 // Properties
-protected:
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
-	UTurnsOrderEventSystem* TurnsOrderEventSystem;
-	
+protected:	
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
 	UCellTwoDimArray* Cells;	
 
@@ -77,10 +74,7 @@ protected:
 	EFieldControllerState State = EFieldControllerState::NotInitialized;
 
 // Getters
-public:
-	UFUNCTION(BlueprintGetter)
-	UTurnsOrderEventSystem* GetTurnsOrderEventSystem() const { return TurnsOrderEventSystem; }
-	
+public:	
 	UFUNCTION(BlueprintGetter)
 	float GetHexagonSize() const { return HexagonSize; }
 
@@ -136,9 +130,6 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void NextTurn(AGamePlayerController* Player);
-	
-	UFUNCTION()
-	void InitializeEventSystem();
 
 // Auxiliary methods
 protected:
