@@ -24,13 +24,7 @@ public:
 	void OnInit();
 	
 	// Current state properties
-protected:
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
-	bool bAutomaticallyEndPrePlayerMove = true;
-	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
-	bool bAutomaticallyEndPostPlayerMove = true;
-	
+protected:	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	bool bCanRotate = true;
 	
@@ -73,22 +67,16 @@ public:
 	
 // Methods
 public:
-	UFUNCTION(BlueprintCallable)
-	void PrePlayerMoveTick();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void StartPreMoveTick();
 	
-	UFUNCTION(BlueprintCallable)
-	void PostPlayerMoveTick();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void StartPostMoveTick();
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void RotateBuildingViewBP();
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-	UFUNCTION(BlueprintImplementableEvent)
-	void PrePlayerMoveTickBP();
-	
-	UFUNCTION(BlueprintImplementableEvent)
-	void PostPlayerMoveTickBP();
 	
 };

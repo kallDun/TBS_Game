@@ -21,6 +21,7 @@ void AFieldController::BeginPlay()
 	if (HasAuthority())
 	{
 		GenerateField();
+		OnPlayerTurnEnded.AddDynamic(this, &AFieldController::PlayerTurnEndedEventHandler);
 	}
 }
 
@@ -70,7 +71,6 @@ void AFieldController::AddPlayerToList(AGamePlayerController* Player)
 	}
 }
 
-
 // -------------------------------- Main methods ----------------------------------
 
 void AFieldController::StartGame_Implementation()
@@ -91,7 +91,6 @@ void AFieldController::PlayerTurnEndedEventHandler(AGamePlayerController* Player
 {
 	NextTurn(Player);
 }
-
 
 // ------------------------------ Auxiliary methods --------------------------------
 

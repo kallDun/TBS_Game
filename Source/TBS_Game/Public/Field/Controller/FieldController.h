@@ -18,6 +18,8 @@ class UTurnsOrderEventSystem;
 enum class ETerrainType : uint8;
 struct FCellClassToTerrain;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerGlobalEvent, AGamePlayerController*, PlayerController);
+
 UCLASS(Abstract, BlueprintType, ClassGroup = (Field))
 class TBS_GAME_API AFieldController : public AGameStateBase
 {
@@ -105,6 +107,12 @@ public:
 	UFUNCTION(BlueprintGetter)
 	int GetPlayersCount() const { return PlayersCount; }
 
+	UFUNCTION(BlueprintGetter)
+	int GetCurrentPlayersCount() const { return Players.Num(); }
+
+// Events
+	UPROPERTY(BlueprintAssignable)
+	FPlayerGlobalEvent OnPlayerTurnEnded;
 	
 // Methods
 public:

@@ -18,9 +18,6 @@ enum class EBuildingPlacementReturnState : uint8;
 enum class EBuildUpgradeReturnState : uint8;
 enum class EBuildingViewState : uint8;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBuildingViewEvent, ABuildingView*, BuildingView);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBuildingEvent);
-
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = (Building))
 class TBS_GAME_API ABuilding : public AGameActor
 {
@@ -32,12 +29,18 @@ public:
 		bReplicates = true;
 		AActor::SetReplicateMovement(true);
 	}
+
+	UFUNCTION()
 	void Init(AFieldController* Field, AGamePlayerController* PlayerControllerOwner);
+
+private:
+	UFUNCTION(BlueprintCallable)
+	void InitUpgradeBuildingComponents(TArray<class UUpgradeBuildingComponent*> Components);
 
 public:
 	// components
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Components", Replicated)
-	TArray<class UUpgradeBuildingComponent*> UpgradeBuildingComponents = {};
+	TArray<UUpgradeBuildingComponent*> UpgradeBuildingComponents = {};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	FName BuildingName;
@@ -134,31 +137,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	FHexagonLocation InitBuildingLocation;
 
-	// events
-	UPROPERTY(BlueprintAssignable)
-	FBuildingViewEvent BuildingViewPreMoveStarted;
-
-	UPROPERTY(BlueprintAssignable)
-	FBuildingViewEvent BuildingViewPreMoveEnded;
-	
-	UPROPERTY(BlueprintAssignable)
-	FBuildingViewEvent BuildingViewPostMoveStarted;
-
-	UPROPERTY(BlueprintAssignable)
-	FBuildingViewEvent BuildingViewPostMoveEnded;
-	
-	UPROPERTY(BlueprintAssignable)
-	FBuildingEvent BuildingPreMoveStarted;
-	
-	UPROPERTY(BlueprintAssignable)
-	FBuildingEvent BuildingPreMoveEnded;
-	
-	UPROPERTY(BlueprintAssignable)
-	FBuildingEvent BuildingPostMoveStarted;
-	
-	UPROPERTY(BlueprintAssignable)
-	FBuildingEvent BuildingPostMoveEnded;
-
 // getters
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -220,18 +198,31 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool CanExpendLocation(FHexagonLocation HexagonLocation) const;
 
+	UFUNCTION()
+	void ChangeBuildingViewsState(EBuildingViewState NewState);
+
+// Move tick
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void PrePlayerMoveTick();
+	void StartPreMoveTick();
+
+	UFUNCTION()
+	void StartBuildingViewPreMove(ABuildingView* BuildingView);
+
+	UFUNCTION()
+	void EndBuildingViewPreMove(ABuildingView* BuildingView);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void PostPlayerMoveTick();
+	void StartPostMoveTick();
+
+	UFUNCTION()
+	void StartBuildingViewPostMove(ABuildingView* BuildingView);
+
+	UFUNCTION()
+	void EndBuildingViewPostMove(ABuildingView* BuildingView);
 
 	UFUNCTION()
 	void AssembleMoveTick();
 
-	UFUNCTION()
-	void ChangeBuildingViewsState(EBuildingViewState NewState);
-	
 private:
 	UFUNCTION()
 	ABuildingView* InitBuildingView(FHexagonLocation HexagonLocation, const bool bIsMainView);
@@ -252,18 +243,4 @@ protected:
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void OnBuildAction();
-
-// turns order
-private:
-	UPROPERTY()
-	int BuildingViewMoveCalledCount = 0;
-
-	UFUNCTION()
-	void DoNextBuildingViewMove(bool bIsPreMove);
-	
-	UFUNCTION()
-	void BuildingViewPreMoveEndedEventHandler(ABuildingView* BuildingView);
-	
-	UFUNCTION()
-	void BuildingViewPostMoveEndedEventHandler(ABuildingView* BuildingView);
 };

@@ -58,6 +58,15 @@ void ABuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME( ABuilding, InitBuildingLocation );
 }
 
+void ABuilding::InitUpgradeBuildingComponents(TArray<UUpgradeBuildingComponent*> Components)
+{
+	for (auto Component : Components)
+	{
+		UpgradeBuildingComponents.Add(Component);
+		Component->SetIsReplicated(true);
+	}
+}
+
 // ----------------- Preview -----------------
 
 void ABuilding::StartPreview()
@@ -381,43 +390,71 @@ bool ABuilding::CanExpendLocation(const FHexagonLocation HexagonLocation) const
 
 // ------------------ Player Move Tick ------------------
 
-void ABuilding::PrePlayerMoveTick_Implementation()
+void ABuilding::StartPreMoveTick_Implementation()
 {
-	BuildingPreMoveStarted.Broadcast();
 	if (BuildingState != EBuildingState::Initialized)
 	{
 		for (UUpgradeBuildingComponent* Upgrade : UpgradeBuildingComponents)
 		{
 			Upgrade->PrePlayerMoveTick();
 		}
-
-		BuildingViewPreMoveEnded.AddDynamic(this, &ABuilding::BuildingViewPreMoveEndedEventHandler);
-		BuildingViewMoveCalledCount = 0;
-		DoNextBuildingViewMove(true);
+		StartBuildingViewPreMove(BuildingViews[0]);
 	}
 	else
 	{
-		BuildingPreMoveEnded.Broadcast();
+		PlayerControllerRef->EndBuildingPreMove(this);
 	}
 }
 
-void ABuilding::PostPlayerMoveTick_Implementation()
+void ABuilding::StartBuildingViewPreMove(ABuildingView* BuildingView)
 {
-	BuildingPostMoveStarted.Broadcast();
+	BuildingView->StartPreMoveTick();
+}
+
+void ABuilding::EndBuildingViewPreMove(ABuildingView* BuildingView)
+{
+	const int Index = BuildingViews.IndexOfByKey(BuildingView);
+	if (Index < BuildingViews.Num() - 1)
+	{
+		StartBuildingViewPreMove(BuildingViews[Index + 1]);
+	}
+	else
+	{
+		PlayerControllerRef->EndBuildingPreMove(this);
+	}
+}
+
+void ABuilding::StartPostMoveTick_Implementation()
+{
 	if (BuildingState != EBuildingState::Initialized)
 	{
 		for (UUpgradeBuildingComponent* Upgrade : UpgradeBuildingComponents)
 		{
 			Upgrade->PostPlayerMoveTick();
 		}
-
-		BuildingViewPostMoveEnded.AddDynamic(this, &ABuilding::BuildingViewPostMoveEndedEventHandler);
-		BuildingViewMoveCalledCount = 0;
-		DoNextBuildingViewMove(false);
+		StartBuildingViewPostMove(BuildingViews[0]);
 	}
 	else
 	{
-		BuildingPostMoveEnded.Broadcast();
+		PlayerControllerRef->EndBuildingPostMove(this);
+	}
+}
+
+void ABuilding::StartBuildingViewPostMove(ABuildingView* BuildingView)
+{
+	BuildingView->StartPostMoveTick();
+}
+
+void ABuilding::EndBuildingViewPostMove(ABuildingView* BuildingView)
+{
+	const int Index = BuildingViews.IndexOfByKey(BuildingView);
+	if (Index < BuildingViews.Num() - 1)
+	{
+		StartBuildingViewPostMove(BuildingViews[Index + 1]);
+	}
+	else
+	{
+		PlayerControllerRef->EndBuildingPostMove(this);
 	}
 }
 
@@ -439,39 +476,6 @@ void ABuilding::AssembleMoveTick()
 		{
 			Upgrade->AssembleMoveTick();
 		}
-	}
-}
-
-void ABuilding::DoNextBuildingViewMove(const bool bIsPreMove)
-{
-	if (BuildingViewMoveCalledCount == BuildingViews.Num())
-	{
-		BuildingViewPreMoveEnded.RemoveDynamic(this, &ABuilding::BuildingViewPreMoveEndedEventHandler);
-		if (bIsPreMove) BuildingPreMoveEnded.Broadcast();
-		else BuildingPostMoveEnded.Broadcast();
-	}
-	else
-	{
-		if (bIsPreMove) BuildingViews[BuildingViewMoveCalledCount]->PrePlayerMoveTick();
-		else BuildingViews[BuildingViewMoveCalledCount]->PostPlayerMoveTick();
-	}
-}
-
-void ABuilding::BuildingViewPreMoveEndedEventHandler(ABuildingView* BuildingView)
-{
-	if (BuildingViews.Contains(BuildingView))
-	{
-		BuildingViewMoveCalledCount++;
-		DoNextBuildingViewMove(true);
-	}
-}
-
-void ABuilding::BuildingViewPostMoveEndedEventHandler(ABuildingView* BuildingView)
-{
-	if (BuildingViews.Contains(BuildingView))
-	{
-		BuildingViewMoveCalledCount++;
-		DoNextBuildingViewMove(false);
 	}
 }
 

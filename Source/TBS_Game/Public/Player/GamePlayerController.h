@@ -66,29 +66,17 @@ public:
 	FPlayerEvent PlayerInitializeFinished;
 	
 	UPROPERTY(BlueprintAssignable)
-	FPlayerEvent PlayerTurnStarted;
-	
-	UPROPERTY(BlueprintAssignable)
-	FPlayerTurnChanged PlayerTurnTypeChanged;	
-
-	UPROPERTY(BlueprintAssignable)
-	FPlayerEvent PlayerTurnEnded;
-	
-	UPROPERTY(BlueprintAssignable)
-	FPlayerEvent PlayerUnitsMoveStarted;
-	
-	UPROPERTY(BlueprintAssignable)
-	FPlayerEvent PlayerUnitsMoveEnded;
-
-	UPROPERTY(BlueprintAssignable)
-	FPlayerEvent PlayerMoveStarted;
-
-	UPROPERTY(BlueprintAssignable)
-	FPlayerEvent PlayerMoveEnded;
+	FPlayerTurnChanged PlayerTurnTypeChanged;
 
 private:
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayerInitializeFinishedBroadcast();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayerTurnTypeChangedBroadcast(const EPlayerTurnType NewPlayerTurnType);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayerTurnEndedBroadcast();
 
 // --------------------------------- not implemented in BPs ----------------------------------
 	
@@ -118,7 +106,8 @@ public:
 	
 // Base overrides
 protected:
-	virtual void BeginPlay() override;	
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 // Initialization
@@ -141,7 +130,7 @@ protected:
 	
 // Methods
 public:	
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION()
 	void StartTurn();
 
 	UFUNCTION()
@@ -153,27 +142,52 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool CheckIfPlayerMove() const;
 
-protected:
 	UFUNCTION()
-	void StartPlayersMove();
+	void EndUnitMove(AUnit* Unit);
+
+	UFUNCTION()
+	void EndBuildingPreMove(ABuilding* Building);
 	
 	UFUNCTION()
+	void EndBuildingPostMove(ABuilding* Building);
+
+protected:
+	UFUNCTION()
 	void EndTurn();
+	
+	UFUNCTION()
+	void SetPlayerTurnType(EPlayerTurnType NewPlayerTurnType);
+
+	UFUNCTION()
+	void StartUnitsMove();
+
+	UFUNCTION()
+	void StartUnitMove(AUnit* Unit);
+
+	UFUNCTION()
+	void StartBuildingsAssembling();
+
+	UFUNCTION()
+	void StartBuildingsPreMove();
+
+	UFUNCTION()
+	void StartBuildingPreMove(ABuilding* Building);
+	
+	UFUNCTION()
+	void StartPlayerMove();
+
+	UFUNCTION()
+	void StartBuildingsPostMove();
+
+	UFUNCTION()
+	void StartBuildingPostMove(ABuilding* Building);
 
 // Actions
 	UFUNCTION(BlueprintCallable)
 	EBuildUpgradeReturnState ConstructBuilding(ABuilding* Building);
-
-// Event handlers
-private:
-	UPROPERTY()
-	int BuildingMoveCalledCount = 0;
 	
 // Auxiliary
 protected:
-	UFUNCTION(BlueprintCallable)
-	void SetPlayerTurnType(EPlayerTurnType NewPlayerTurnType);
-	
 	UFUNCTION(BlueprintCallable)
 	AActor* GetActorUnderCursor() const;
 

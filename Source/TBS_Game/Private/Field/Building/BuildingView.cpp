@@ -19,8 +19,6 @@ void ABuildingView::Init(AFieldController* Field, ABuilding* BuildingReference, 
 void ABuildingView::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME( ABuildingView, bAutomaticallyEndPrePlayerMove );
-	DOREPLIFETIME( ABuildingView, bAutomaticallyEndPostPlayerMove );
 	DOREPLIFETIME( ABuildingView, bCanRotate );
 	DOREPLIFETIME( ABuildingView, BuildingRef );
 	DOREPLIFETIME( ABuildingView, bIsMainBuildingView );
@@ -31,24 +29,14 @@ void ABuildingView::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 
 // -------------------------------------  Player pre/post move  -------------------------------------------
 
-void ABuildingView::PrePlayerMoveTick()
+void ABuildingView::StartPreMoveTick_Implementation()
 {
-	BuildingRef->BuildingViewPreMoveStarted.Broadcast(this);
-	PrePlayerMoveTickBP();
-	if (bAutomaticallyEndPrePlayerMove)
-	{
-		BuildingRef->BuildingViewPreMoveEnded.Broadcast(this);
-	}
+	BuildingRef->EndBuildingViewPreMove(this);
 }
 
-void ABuildingView::PostPlayerMoveTick()
+void ABuildingView::StartPostMoveTick_Implementation()
 {
-	BuildingRef->BuildingViewPostMoveStarted.Broadcast(this);
-	PostPlayerMoveTickBP();
-	if (bAutomaticallyEndPostPlayerMove)
-	{
-		BuildingRef->BuildingViewPostMoveEnded.Broadcast(this);
-	}
+	BuildingRef->EndBuildingViewPostMove(this);
 }
 
 
