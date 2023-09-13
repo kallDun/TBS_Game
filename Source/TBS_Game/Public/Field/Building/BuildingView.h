@@ -28,7 +28,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	bool bCanRotate = true;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated, ReplicatedUsing=OnRep_BuildingRef)
 	ABuilding* BuildingRef;
 
 	UPROPERTY(BlueprintGetter=IsMainBuildingView, BlueprintSetter=SetMainBuildingView, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
@@ -78,5 +78,7 @@ public:
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRep_BuildingRef();
 };

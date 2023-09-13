@@ -49,6 +49,7 @@ void AGamePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME( AGamePlayerController, MovesLeft );
 	DOREPLIFETIME( AGamePlayerController, BuildingPrefabs );
 	DOREPLIFETIME( AGamePlayerController, Buildings );
+	DOREPLIFETIME( AGamePlayerController, CellParamsMap );
 }
 
 // -------------------------------- Initialization --------------------------------

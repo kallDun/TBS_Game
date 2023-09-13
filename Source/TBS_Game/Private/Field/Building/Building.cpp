@@ -83,6 +83,7 @@ void ABuilding::StartPreview()
 	PrefabPreview->SetState(EBuildingViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
 	CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+	PlayerControllerRef->CellParamsMap = CellParamsMap;
 }
 
 EBuildingPlacementReturnState ABuilding::SetPreviewLocation(const FHexagonLocation HexagonLocation)
@@ -129,6 +130,7 @@ void ABuilding::StopPreview()
 	}
 	PrefabViews.Empty();
 	CellParamsMap = nullptr;
+	PlayerControllerRef->CellParamsMap = nullptr;
 }
 
 
@@ -154,6 +156,7 @@ EBuildingPlacementReturnState ABuilding::TryToExpendLocation(const FHexagonLocat
 		InitBuildingLocation = HexagonLocation;
 		PrefabViews.Add(InitBuildingView(HexagonLocation, true));
 		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		PlayerControllerRef->CellParamsMap = CellParamsMap;
 		return EBuildingPlacementReturnState::Succeeded;
 	}
 	if (GetTotalUsedCells() < GetMaxCellCount())
@@ -164,6 +167,7 @@ EBuildingPlacementReturnState ABuilding::TryToExpendLocation(const FHexagonLocat
 		}
 		PrefabViews.Add(InitBuildingView(HexagonLocation, false));
 		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		PlayerControllerRef->CellParamsMap = CellParamsMap;
 		return EBuildingPlacementReturnState::Succeeded;
 	}
 	return EBuildingPlacementReturnState::NotEnoughAreaToBuild;
@@ -190,6 +194,7 @@ bool ABuilding::DeleteExpendedLocation(const FHexagonLocation HexagonLocation)
 			PrefabViews[0]->SetMainBuildingView(true);
 		}
 		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		PlayerControllerRef->CellParamsMap = CellParamsMap;
 	}
 	return false;
 }

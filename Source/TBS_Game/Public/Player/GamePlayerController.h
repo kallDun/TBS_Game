@@ -54,11 +54,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	int MovesLeft = 0;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated, ReplicatedUsing=OnRep_BuildingPrefabs)
 	TArray<ABuilding*> BuildingPrefabs = {};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State", Replicated)
 	TArray<ABuilding*> Buildings = {};
+
+// Visual
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated, ReplicatedUsing=OnRep_CellParamsMap)
+	class UCellParamsTwoDimArray* CellParamsMap = nullptr;
 
 // Events
 public:
@@ -107,7 +111,9 @@ public:
 // Base overrides
 protected:
 	virtual void BeginPlay() override;
+	
 	virtual void Tick(float DeltaSeconds) override;
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 // Initialization
@@ -126,7 +132,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void InitInputComponent();
-	
 	
 // Methods
 public:	
@@ -196,4 +201,12 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void SetActorLocationAndRotationServer(FVector WorldLocation, FRotator WorldRotation);
+
+// Replication
+protected:
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRep_CellParamsMap();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRep_BuildingPrefabs();
 };
