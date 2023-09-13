@@ -10,7 +10,7 @@
 class ACell;
 class ABuilding;
 class AUnitView;
-class UCellParamsMap;
+class UCellParamsMapGenerator;
 class AGamePlayerController;
 enum class EUnitPillarType : uint8;
 enum class EUnitAttackType : uint8;
@@ -90,7 +90,7 @@ public:
 	TArray<AUnitView*> PrefabViews = {};
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	UCellParamsMap* CellParamsMap = nullptr;
+	UCellParamsMapGenerator* CellParamsMap = nullptr;
 
 	
 // Getters

@@ -9,7 +9,7 @@
 #include "Field/Anchor/TerrainRules.h"
 #include "Building.generated.h"
 
-class UCellParamsMap;
+class UCellParamsMapGenerator;
 class ABuildingView;
 class AGamePlayerController;
 enum class EBuildingState : uint8;
@@ -132,7 +132,7 @@ public:
 	ABuildingView* PrefabPreview;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
-	UCellParamsMap* CellParamsMap = nullptr;
+	class UCellParamsTwoDimArray* CellParamsMap = nullptr;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	FHexagonLocation InitBuildingLocation;
@@ -237,6 +237,8 @@ public:
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void ChangePropertiesAccordingToImproveLevel(int ImproveLevel); // TODO: add by default event to increase moves to build

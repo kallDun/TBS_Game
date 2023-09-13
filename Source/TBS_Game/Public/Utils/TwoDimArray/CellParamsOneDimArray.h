@@ -5,8 +5,8 @@
 #include "CellParamsOneDimArray.generated.h"
 
 
-UCLASS(BlueprintType)
-class TBS_GAME_API UCellParamsOneDimArray : public UObject
+USTRUCT(BlueprintType)
+struct FCellParamsOneDimArray
 {
 	GENERATED_BODY()
 
@@ -15,27 +15,23 @@ private:
 	TArray<FCellParameters> Array = {};
 	
 public:
-	UFUNCTION(BlueprintCallable)
-	static UCellParamsOneDimArray* New(const int Length)
+	FCellParamsOneDimArray() = default;
+	
+	explicit FCellParamsOneDimArray(const int Length)
 	{
-		UCellParamsOneDimArray* NewArray = NewObject<UCellParamsOneDimArray>();
-		NewArray->Array.SetNum(Length);
-		return NewArray;
+		Array.SetNum(Length);
 	}
 	
-	UFUNCTION(BlueprintCallable)
 	FCellParameters GetCell(const int Index)
 	{
 		return Array[Index];
 	}
 	
-	UFUNCTION(BlueprintCallable)
 	void SetCell(const int Index, FCellParameters Cell)
 	{
 		Array[Index] = Cell;
 	}
 
-	UFUNCTION(BlueprintCallable)
 	int GetLength() const
 	{
 		return Array.Num();

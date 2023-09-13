@@ -1,16 +1,17 @@
 #include "Field/Building/Building.h"
 
+#include <Engine/ActorChannel.h>
 #include <Net/UnrealNetwork.h>
-
-#include "Field/Anchor/CellParamsMap.h"
+#include "Field/Anchor/CellParamsMapGenerator.h"
 #include "Field/Building/BuildingView.h"
 #include "Field/Building/UpgradeBuildingComponent.h"
 #include "Field/Controller/FieldController.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
 #include "Field/ReturnState/BuildingPlacementReturnState.h"
 #include "Field/ReturnState/BuildUpgradeReturnState.h"
 #include "Player/GamePlayerController.h"
 #include "Field/FieldActor.h"
+#include "Field/Anchor/CellParametersType.h"
+#include "Utils/TwoDimArray/CellParamsTwoDimArray.h"
 
 
 void ABuilding::Init(AFieldController* Field, AGamePlayerController* PlayerControllerOwner)
@@ -58,6 +59,13 @@ void ABuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME( ABuilding, InitBuildingLocation );
 }
 
+bool ABuilding::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+	bWroteSomething |= Channel->ReplicateSubobject(CellParamsMap, *Bunch, *RepFlags);
+	return bWroteSomething;
+}
+
 void ABuilding::InitUpgradeBuildingComponents(TArray<UUpgradeBuildingComponent*> Components)
 {
 	for (auto Component : Components)
@@ -74,7 +82,7 @@ void ABuilding::StartPreview()
 	PrefabPreview = InitBuildingView(FHexagonLocation(), false);
 	PrefabPreview->SetState(EBuildingViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
-	CellParamsMap = UCellParamsMap::FromBuilding(this);
+	CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
 }
 
 EBuildingPlacementReturnState ABuilding::SetPreviewLocation(const FHexagonLocation HexagonLocation)
@@ -145,7 +153,7 @@ EBuildingPlacementReturnState ABuilding::TryToExpendLocation(const FHexagonLocat
 	{
 		InitBuildingLocation = HexagonLocation;
 		PrefabViews.Add(InitBuildingView(HexagonLocation, true));
-		CellParamsMap = UCellParamsMap::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
 		return EBuildingPlacementReturnState::Succeeded;
 	}
 	if (GetTotalUsedCells() < GetMaxCellCount())
@@ -155,7 +163,7 @@ EBuildingPlacementReturnState ABuilding::TryToExpendLocation(const FHexagonLocat
 			return EBuildingPlacementReturnState::CannotExpandArea;
 		}
 		PrefabViews.Add(InitBuildingView(HexagonLocation, false));
-		CellParamsMap = UCellParamsMap::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
 		return EBuildingPlacementReturnState::Succeeded;
 	}
 	return EBuildingPlacementReturnState::NotEnoughAreaToBuild;
@@ -181,7 +189,7 @@ bool ABuilding::DeleteExpendedLocation(const FHexagonLocation HexagonLocation)
 		{
 			PrefabViews[0]->SetMainBuildingView(true);
 		}
-		CellParamsMap = UCellParamsMap::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
 	}
 	return false;
 }

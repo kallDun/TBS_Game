@@ -1,4 +1,4 @@
-#include "Field/Anchor/CellParamsMap.h"
+#include "Field/Anchor/CellParamsMapGenerator.h"
 #include "Field/Building/Building.h"
 #include "Field/Cell/Cell.h"
 #include "Field/Controller/FieldController.h"
@@ -11,43 +11,17 @@
 #include "Utils/TwoDimArray/CellTwoDimArray.h"
 
 
-UCellParamsMap* UCellParamsMap::FromBuilding(const ABuilding* Building)
+UCellParamsTwoDimArray* UCellParamsMapGenerator::FromBuilding(const ABuilding* Building)
 {
-	UCellParamsMap* Map = NewObject<UCellParamsMap>();
+	UCellParamsTwoDimArray* Cells = nullptr;
 	for (const FAnchorPoint Anchor : Building->AnchorPoints)
 	{
-		Map = Add(Map, FromBuildingAnchor(Building, Anchor));
+		Cells = AddArrays(Cells, InitFromBuildingAnchor(Building, Anchor));
 	}
-	return Map;
+	return Cells;
 }
 
-UCellParamsMap* UCellParamsMap::FromUnit(const AUnit* Unit)
-{
-	UCellParamsMap* Map = NewObject<UCellParamsMap>();
-	return Map;
-}
-
-UCellParamsMap* UCellParamsMap::FromBuildingAnchor(const ABuilding* Building, const FAnchorPoint& Anchor)
-{
-	UCellParamsMap* Map = NewObject<UCellParamsMap>();
-	Map->Init(Building, Anchor);
-	return Map;
-}
-
-UCellParamsMap* UCellParamsMap::FromUnitAnchor(const AUnit* Unit)
-{
-	UCellParamsMap* Map = NewObject<UCellParamsMap>();
-	return Map;
-}
-
-UCellParamsMap* UCellParamsMap::Add(const UCellParamsMap* MapA, const UCellParamsMap* MapB)
-{
-	UCellParamsMap* Map = NewObject<UCellParamsMap>();
-	Map->Cells = AddArrays(MapA->Cells, MapB->Cells);
-	return Map;
-}
-
-UCellParamsTwoDimArray* UCellParamsMap::AddArrays(UCellParamsTwoDimArray* MapA, UCellParamsTwoDimArray* MapB)
+UCellParamsTwoDimArray* UCellParamsMapGenerator::AddArrays(UCellParamsTwoDimArray* MapA, UCellParamsTwoDimArray* MapB)
 {
 	if (!MapA) return MapB;
 	if (!MapB) return MapA;	
@@ -68,29 +42,18 @@ UCellParamsTwoDimArray* UCellParamsMap::AddArrays(UCellParamsTwoDimArray* MapA, 
 	return Map;
 }
 
-void UCellParamsMap::Init(const ABuilding* Building, const FAnchorPoint& Anchor)
+UCellParamsTwoDimArray* UCellParamsMapGenerator::InitFromBuildingAnchor(const ABuilding* Building, const FAnchorPoint& Anchor)
 {
+	UCellParamsTwoDimArray* Cells = nullptr;
 	TArray<FSingleAnchorData> Anchors = Anchor.GetAnchors(Building, 0);
 	for (const FSingleAnchorData SingleAnchor : Anchors)
 	{
 		Cells = AddArrays(Cells ,GetCellsMapForSingleAnchor(Building, SingleAnchor));
 	}
+	return Cells;
 }
 
-void UCellParamsMap::InitUnit(const AUnit* Unit, const FAnchorPoint& Anchor)
-{
-}
-
-FCellParameters UCellParamsMap::GetCell(const FHexagonLocation Location) const
-{
-	if (Cells)
-	{
-		return Cells->GetCell(Location);
-	}
-	return FCellParameters();
-}
-
-UCellParamsTwoDimArray* UCellParamsMap::GetCellsMapForSingleAnchor(const ABuilding* Building, const FSingleAnchorData& SingleAnchor)
+UCellParamsTwoDimArray* UCellParamsMapGenerator::GetCellsMapForSingleAnchor(const ABuilding* Building, const FSingleAnchorData& SingleAnchor)
 {
 	UCellTwoDimArray* CellRefs = Building->GetFieldController()->GetCells();
 	UCellParamsTwoDimArray* CellsMap = UCellParamsTwoDimArray::New(CellRefs->GetLength().X, CellRefs->GetLength().Y);
@@ -139,7 +102,7 @@ UCellParamsTwoDimArray* UCellParamsMap::GetCellsMapForSingleAnchor(const ABuildi
 	return CellsMap;
 }
 
-bool UCellParamsMap::CheckTerrainRules(const ACell* Cell, const FTerrainRules& TerrainRules)
+bool UCellParamsMapGenerator::CheckTerrainRules(const ACell* Cell, const FTerrainRules& TerrainRules)
 {
 	if (TerrainRules.DepthRulesType == ETerrainDepthRulesType::CannotBuildWithDepth && Cell->GetDepth() != 0)
 	{
@@ -152,7 +115,7 @@ bool UCellParamsMap::CheckTerrainRules(const ACell* Cell, const FTerrainRules& T
 	return TerrainRules.GetTerrainRule(Cell->GetTerrainType()).bCanBuild;
 }
 
-int UCellParamsMap::CalculateImprovementLevel(const ACell* Cell, const ABuilding* Building, const FSingleAnchorData SingleAnchor, const int Distance)
+int UCellParamsMapGenerator::CalculateImprovementLevel(const ACell* Cell, const ABuilding* Building, const FSingleAnchorData SingleAnchor, const int Distance)
 {
 	const FSingleTerrainRule Rule = Building->TerrainRules.GetTerrainRule(Cell->GetTerrainType());
 	const int BuildingRadius = SingleAnchor.Radius + Rule.BuildingRadiusAddition;
