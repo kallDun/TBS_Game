@@ -11,29 +11,26 @@ class TBS_GAME_API ACell : public AFieldActor
 	GENERATED_BODY()
 
 public:
-	ACell() {}
+	ACell();
 	void Init(AFieldController* Field, const FHexagonLocation Location, const int PlayerOwner,
 		const int Depth, const bool bHasWaterSource, const int PcgSeed);
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnCellInit();
-
 // Components
 protected:	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
 	int PCGSeed;
 	
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, BlueprintGetter=GetTerrainType, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, BlueprintGetter=GetTerrainType, meta = (AllowPrivateAccess = "true"), Replicated)
 	ETerrainType Type;
 
-	UPROPERTY(BlueprintReadOnly, BlueprintGetter=GetPlayerOwnerNumber, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, BlueprintGetter=GetPlayerOwnerNumber, meta = (AllowPrivateAccess = "true"), Replicated)
 	int PlayerOwnerNumber;
 	
-	UPROPERTY(BlueprintReadOnly, BlueprintGetter=GetDepth, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, BlueprintGetter=GetDepth, meta = (AllowPrivateAccess = "true"), Replicated)
 	int Depth; // positive is above ground, negative is below ground
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
 	bool bHasWaterSource;
 
 // TODO: add getters for properties if needed
@@ -46,5 +43,9 @@ public:
 	
 	UFUNCTION(BlueprintGetter)
 	int GetDepth() const { return Depth; }
+
+// Methods
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 };

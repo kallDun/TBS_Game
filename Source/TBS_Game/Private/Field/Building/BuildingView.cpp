@@ -1,6 +1,5 @@
 #include "Field/Building/BuildingView.h"
-
-#include "NativeGameplayTags.h"
+#include "Net/UnrealNetwork.h"
 #include "Field/Building/Building.h"
 #include "Field/Controller/FieldController.h"
 #include "Field/Event/TurnsOrderEventSystem.h"
@@ -18,36 +17,31 @@ void ABuildingView::Init(AFieldController* Field, ABuilding* BuildingReference, 
 	OnInit();
 }
 
+void ABuildingView::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME( ABuildingView, bCanRotate );
+	DOREPLIFETIME( ABuildingView, BuildingRef );
+	DOREPLIFETIME( ABuildingView, bIsMainBuildingView );
+	DOREPLIFETIME( ABuildingView, CurrentHitPoints );
+	DOREPLIFETIME( ABuildingView, ViewState );
+}
+
 
 // -------------------------------------  Player pre/post move  -------------------------------------------
 
-void ABuildingView::PrePlayerMoveTick()
+void ABuildingView::StartPreMoveTick_Implementation()
 {
-	GetEventSystem()->BuildingViewPreMoveStarted.Broadcast(this);
-	PrePlayerMoveTickBP();
-	if (bAutomaticallyEndPrePlayerMove)
-	{
-		GetEventSystem()->BuildingViewPreMoveEnded.Broadcast(this);
-	}
+	BuildingRef->EndBuildingViewPreMove(this);
 }
 
-void ABuildingView::PostPlayerMoveTick()
+void ABuildingView::StartPostMoveTick_Implementation()
 {
-	GetEventSystem()->BuildingViewPostMoveStarted.Broadcast(this);
-	PostPlayerMoveTickBP();
-	if (bAutomaticallyEndPostPlayerMove)
-	{
-		GetEventSystem()->BuildingViewPostMoveEnded.Broadcast(this);
-	}
+	BuildingRef->EndBuildingViewPostMove(this);
 }
 
 
 // -------------------------------------  Getters  --------------------------------------------------
-
-UTurnsOrderEventSystem* ABuildingView::GetEventSystem() const
-{
-	return BuildingRef->GetFieldController()->GetTurnsOrderEventSystem();
-}
 
 bool ABuildingView::IsPreviewState() const
 {

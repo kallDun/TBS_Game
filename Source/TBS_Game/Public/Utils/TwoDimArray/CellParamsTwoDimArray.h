@@ -1,4 +1,6 @@
 #pragma once
+#include <Net/UnrealNetwork.h>
+
 #include "CoreMinimal.h"
 #include <UObject/Object.h>
 #include "CellParamsOneDimArray.h"
@@ -13,8 +15,8 @@ class TBS_GAME_API UCellParamsTwoDimArray : public UObject
 	GENERATED_BODY()
 
 private:
-	UPROPERTY()
-	TArray<UCellParamsOneDimArray*> Array = {};
+	UPROPERTY(Replicated)
+	TArray<FCellParamsOneDimArray> Array = {};
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -23,7 +25,7 @@ public:
 		UCellParamsTwoDimArray* NewArray = NewObject<UCellParamsTwoDimArray>();
 		for (int i = 0; i < LengthX; ++i)
 		{
-			NewArray->Array.Add(UCellParamsOneDimArray::New(LengthY));
+			NewArray->Array.Add(FCellParamsOneDimArray(LengthY));
 		}
 		return NewArray;
 	}
@@ -31,28 +33,28 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FCellParameters GetCell(const FHexagonLocation Location)
 	{
-		return Array[Location.X]->GetCell(Location.Y);
+		return Array[Location.X].GetCell(Location.Y);
 	}
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCell(const FHexagonLocation Location, const FCellParameters Cell)
 	{
-		Array[Location.X]->SetCell(Location.Y, Cell);
+		Array[Location.X].SetCell(Location.Y, Cell);
 	}
 
 	UFUNCTION(BlueprintCallable)
 	FHexagonLocation GetLength() const
 	{
-		return FHexagonLocation(Array.Num(), Array[0]->GetLength());
+		return FHexagonLocation(Array.Num(), Array[0].GetLength());
 	}
 
 	void ForEach(const FCellParamsTwoDimArrayIterator& IteratorFunction)
 	{
 		for (int i = 0; i < Array.Num(); ++i)
 		{
-			for (int j = 0; j < Array[i]->GetLength(); ++j)
+			for (int j = 0; j < Array[i].GetLength(); ++j)
 			{
-				IteratorFunction.Execute(FHexagonLocation(i, j), Array[i]->GetCell(j));
+				IteratorFunction.Execute(FHexagonLocation(i, j), Array[i].GetCell(j));
 			}
 		}
 	}
@@ -65,5 +67,15 @@ public:
 		{
 			IteratorFunction.Execute(Index, Cell);
 		}));
+	}
+
+	__override virtual bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override
+	{
+		DOREPLIFETIME( UCellParamsTwoDimArray, Array );
 	}
 };

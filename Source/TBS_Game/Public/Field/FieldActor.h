@@ -16,7 +16,7 @@ public:
 	AFieldActor() {}
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Getter = GetLocation, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Getter = GetLocation, meta = (AllowPrivateAccess = "true"), Replicated)
 	FHexagonLocation Location;
 
 // Getters
@@ -38,4 +38,6 @@ public:
 protected:
 	UFUNCTION(BlueprintCallable)
 	void UpdateWorldLocation();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

@@ -1,6 +1,6 @@
 #include "Field/Unit/Unit.h"
 
-#include "Field/Anchor/CellParamsMap.h"
+#include "Field/Anchor/CellParamsMapGenerator.h"
 #include "Field/ReturnState/UnitPlacementReturnState.h"
 #include "Field/ReturnState/UnitUpgradeReturnState.h"
 #include "Player/GamePlayerController.h"
@@ -15,10 +15,10 @@ void AUnit::Init(AFieldController* Field, AGamePlayerController* PlayerControlle
 
 int AUnit::GetImproveLevelFromLocation(const FHexagonLocation HexagonLocation) const
 {
-	if (CellParamsMap)
+	/*if (CellParamsMap)
 	{
 		return CellParamsMap->GetCell(HexagonLocation).ImproveLevel;
-	}
+	}*/
 	UE_LOG(LogTemp, Error, TEXT("ABuilding::GetImproveLevelFromLocation: CellParamsMap is nullptr"));
 	return 0;
 }
@@ -92,7 +92,7 @@ bool AUnit::DeleteExpendedLocation(const FHexagonLocation HexagonLocation)
 		if (bIsMainView && PrefabViews.Num() > 0)
 		{
 		}
-		CellParamsMap = UCellParamsMap::FromUnit(this);
+		//CellParamsMap = UCellParamsMapGenerator::FromUnit(this);
 	}
 	return false;
 }
@@ -105,7 +105,7 @@ void AUnit::StartPreview()
 	PrefabPreview = InitUnitView(FHexagonLocation());
 	PrefabPreview->SetState(EUnitViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
-	CellParamsMap = UCellParamsMap::FromUnit(this);
+	//CellParamsMap = UCellParamsMapGenerator::FromUnit(this);
 }
 
 void AUnit::StopPreview()

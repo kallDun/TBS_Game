@@ -1,6 +1,27 @@
 #include "Field/Building/UpgradeBuildingComponent.h"
+
+#include <Net/UnrealNetwork.h>
+
 #include "Field/Building/BuildingViewState.h"
 #include "Field/ReturnState/BuildUpgradeReturnState.h"
+
+
+void UUpgradeBuildingComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME( UUpgradeBuildingComponent, LevelNumber );
+	DOREPLIFETIME( UUpgradeBuildingComponent, MaxHitPointsAddition );
+	DOREPLIFETIME( UUpgradeBuildingComponent, MaxCellCountAddition );
+	DOREPLIFETIME( UUpgradeBuildingComponent, MovesToBuild );
+	DOREPLIFETIME( UUpgradeBuildingComponent, MovesToAssemble );
+	DOREPLIFETIME( UUpgradeBuildingComponent, Properties );
+	DOREPLIFETIME( UUpgradeBuildingComponent, UpgradeActionInfo );
+	DOREPLIFETIME( UUpgradeBuildingComponent, PropertyChangedFromImproveLevelInfo );
+	DOREPLIFETIME( UUpgradeBuildingComponent, MainRequirementsToBuildInfo );
+	DOREPLIFETIME( UUpgradeBuildingComponent, UpgradingState );
+	DOREPLIFETIME( UUpgradeBuildingComponent, MovesToBuildLeft );
+	DOREPLIFETIME( UUpgradeBuildingComponent, MovesToAssembleLeft );
+}
 
 
 // ------------------ Upgrade Logic ------------------

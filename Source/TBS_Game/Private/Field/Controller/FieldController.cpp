@@ -1,19 +1,28 @@
 #include "Field/Controller//FieldController.h"
-
+#include "Field/Event/TurnsOrderEventSystem.h"
 #include <Net/UnrealNetwork.h>
-
 #include "Field/Cell/Cell.h"
 #include "Field/Cell/CellClassToTerrain.h"
 #include "Field/Controller/FieldControllerState.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
+#include "Utils/TwoDimArray/CellTwoDimArray.h"
+#include "Engine/ActorChannel.h"
 
 
 // --------------------------------- Init methods ----------------------------------
 
 AFieldController::AFieldController()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	State = EFieldControllerState::WaitingForPlayers;
+	bReplicates = true;
+}
+
+void AFieldController::BeginPlay()
+{
+	Super::BeginPlay();
+	if (HasAuthority())
+	{
+		GenerateField();
+		OnPlayerTurnEnded.AddDynamic(this, &AFieldController::PlayerTurnEndedEventHandler);
+	}
 }
 
 
@@ -22,69 +31,47 @@ AFieldController::AFieldController()
 void AFieldController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME( AFieldController, State );
+	// General
+	DOREPLIFETIME( AFieldController, HexagonSize );
+	DOREPLIFETIME( AFieldController, FieldCenter );
+	DOREPLIFETIME( AFieldController, DecreasingImproveLevelByRadius );
+	DOREPLIFETIME( AFieldController, PlayersCount );
+	DOREPLIFETIME( AFieldController, CellClasses );
+	DOREPLIFETIME( AFieldController, MovesPerTurn );
+	DOREPLIFETIME( AFieldController, BuildingClasses );
+	DOREPLIFETIME( AFieldController, MainBuildingClassIndex );
+	DOREPLIFETIME( AFieldController, UnitClasses );
+	DOREPLIFETIME( AFieldController, HeroClasses );
+	// State
+	DOREPLIFETIME( AFieldController, Cells );
+	DOREPLIFETIME( AFieldController, Players );
 	DOREPLIFETIME( AFieldController, Turn );
+	DOREPLIFETIME( AFieldController, State );
+}
+
+bool AFieldController::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+	bWroteSomething |= Channel->ReplicateSubobject(Cells, *Bunch, *RepFlags);
+	return bWroteSomething;
 }
 
 
-// ---------------------------- Check connected players ----------------------------
+// ---------------------------- Add & Check connected players ----------------------------
 
 void AFieldController::AddPlayerToList(AGamePlayerController* Player)
 {
-	Players.Add(Player);
-
-	const FString Message = FString::Printf(TEXT("Player %d is initialized. Total players = %d\nIsServer = %hs"),
-		Players.IndexOfByKey(Player), Players.Num(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Message);
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow,
-		FString::Printf(TEXT("FC Owner = %s"), *Owner.GetName()));
-}
-
-void AFieldController::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-	if (GetWorld()->GetNetMode() == NM_ListenServer)
+	if (HasAuthority())
 	{
-		CheckForPlayersInitialize();
+		Players.Add(Player);
+		if (Players.Num() == PlayersCount)
+		{
+			StartGame();
+		}
 	}
 }
-
-void AFieldController::CheckForPlayersInitialize()
-{
-	if (State == EFieldControllerState::WaitingForPlayers && IsAllPlayersInitialized())
-	{
-		InitializeEventSystem();
-		GenerateField();
-		InitializePlayers();
-		StartGame();
-	}
-}
-
-void AFieldController::InitializeEventSystem_Implementation()
-{
-	TurnsOrderEventSystem = NewObject<UTurnsOrderEventSystem>(this);
-	TurnsOrderEventSystem->PlayerTurnEnded.AddDynamic(this, &AFieldController::PlayerTurnEndedEventHandler);
-}
-
 
 // -------------------------------- Main methods ----------------------------------
-
-void AFieldController::GenerateField_Implementation()
-{
-	const FString Message = FString::Printf(TEXT("Generate Field!\nIsServer = %hs"),
-			GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, Message);
-	State = EFieldControllerState::GeneratingField;
-}
-
-void AFieldController::InitializePlayers_Implementation()
-{	
-	for (int i = 0; i < Players.Num(); i++)
-	{
-		Players[i]->Init(i, GetPlayerCenterLocation(i));
-	}
-}
 
 void AFieldController::StartGame_Implementation()
 {
@@ -105,7 +92,6 @@ void AFieldController::PlayerTurnEndedEventHandler(AGamePlayerController* Player
 	NextTurn(Player);
 }
 
-
 // ------------------------------ Auxiliary methods --------------------------------
 
 TSubclassOf<ACell> AFieldController::GetCellClassByTerrainType(const ETerrainType TerrainType) const
@@ -121,14 +107,4 @@ TSubclassOf<ACell> AFieldController::GetCellClassByTerrainType(const ETerrainTyp
 	}
 	const int RandomIndex = FMath::RandRange(0, ClassesWithNeedTerrain.Num() - 1);
 	return ClassesWithNeedTerrain[RandomIndex].CellClass;	
-}
-
-bool AFieldController::IsAllPlayersInitialized() const
-{
-	if (Players.Num() != GetPlayersCount()) return false;
-	for (const AGamePlayerController* Player : Players)
-	{
-		if (Player->InitializationState == EPlayerInitializationState::NotInitialized) return false;
-	}
-	return true;
 }

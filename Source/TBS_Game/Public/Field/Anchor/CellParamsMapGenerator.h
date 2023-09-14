@@ -2,11 +2,10 @@
 #include "CoreMinimal.h"
 #include <UObject/Object.h>
 #include "AnchorPoint.h"
-#include "CellParameters.h"
 #include "SingleAnchorData.h"
 #include "TerrainRules.h"
 #include "Field/Cell/Cell.h"
-#include "CellParamsMap.generated.h"
+#include "CellParamsMapGenerator.generated.h"
 
 class UCellParamsTwoDimArray;
 class AGamePlayerController;
@@ -15,42 +14,18 @@ class AUnit;
 class AFieldController;
 
 UCLASS(BlueprintType)
-class TBS_GAME_API UCellParamsMap : public UObject
+class TBS_GAME_API UCellParamsMapGenerator : public UObject
 {
 	GENERATED_BODY()
-	UCellParamsMap() = default;
-
-public:
-	UPROPERTY(BlueprintReadOnly)
-	UCellParamsTwoDimArray* Cells;
+	UCellParamsMapGenerator() = default;
 
 public:
 	UFUNCTION(BlueprintCallable)
-	static UCellParamsMap* FromBuilding(const ABuilding* Building);
-
-	UFUNCTION(BlueprintCallable)
-	static UCellParamsMap* FromUnit(const AUnit* Unit);
-
-	UFUNCTION(BlueprintCallable)
-	static UCellParamsMap* Add(const UCellParamsMap* MapA, const UCellParamsMap* MapB);
+	static UCellParamsTwoDimArray* FromBuilding(const ABuilding* Building);
 
 private:
 	UFUNCTION(BlueprintCallable)
-	void Init(const ABuilding* Building, const FAnchorPoint& Anchor);
-
-	UFUNCTION(BlueprintCallable)
-	void InitUnit(const AUnit* Unit, const FAnchorPoint& Anchor);
-
-public:
-	UFUNCTION(BlueprintCallable)
-	FCellParameters GetCell(FHexagonLocation Location) const;
-	
-private:
-	UFUNCTION(BlueprintCallable)
-	static UCellParamsMap* FromBuildingAnchor(const ABuilding* Building, const FAnchorPoint& Anchor);
-
-	UFUNCTION(BlueprintCallable)
-	static UCellParamsMap* FromUnitAnchor(const AUnit* Unit);
+	static UCellParamsTwoDimArray* InitFromBuildingAnchor(const ABuilding* Building, const FAnchorPoint& Anchor);
 	
 	UFUNCTION(BlueprintCallable)
 	static UCellParamsTwoDimArray* AddArrays(UCellParamsTwoDimArray* MapA, UCellParamsTwoDimArray* MapB);

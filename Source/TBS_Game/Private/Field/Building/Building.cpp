@@ -1,22 +1,79 @@
 #include "Field/Building/Building.h"
-#include "Field/Anchor/CellParamsMap.h"
+
+#include <Engine/ActorChannel.h>
+#include <Net/UnrealNetwork.h>
+#include "Field/Anchor/CellParamsMapGenerator.h"
 #include "Field/Building/BuildingView.h"
 #include "Field/Building/UpgradeBuildingComponent.h"
 #include "Field/Controller/FieldController.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
 #include "Field/ReturnState/BuildingPlacementReturnState.h"
 #include "Field/ReturnState/BuildUpgradeReturnState.h"
 #include "Player/GamePlayerController.h"
 #include "Field/FieldActor.h"
+#include "Field/Anchor/CellParametersType.h"
+#include "Utils/TwoDimArray/CellParamsTwoDimArray.h"
 
 
 void ABuilding::Init(AFieldController* Field, AGamePlayerController* PlayerControllerOwner)
 {
-	SetOwner(PlayerControllerOwner);
 	PlayerControllerRef = PlayerControllerOwner;
 	AGameActor::Init(Field);
 }
 
+void ABuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	// General properties
+	DOREPLIFETIME( ABuilding, UpgradeBuildingComponents );
+	DOREPLIFETIME( ABuilding, BuildingName );
+	DOREPLIFETIME( ABuilding, BuildingType );
+	DOREPLIFETIME( ABuilding, BuildingViewClass );
+	DOREPLIFETIME( ABuilding, BuildingMeshRef );
+	DOREPLIFETIME( ABuilding, InitProperties );
+	DOREPLIFETIME( ABuilding, bCanBuildWithOtherBuildings );
+	DOREPLIFETIME( ABuilding, AffectingOnOtherBuildingImproveLevel );
+	DOREPLIFETIME( ABuilding, AnchorPoints );
+	DOREPLIFETIME( ABuilding, TerrainRules );
+	DOREPLIFETIME( ABuilding, InitMaxHitPoints );
+	DOREPLIFETIME( ABuilding, InitMaxCellCount );
+	DOREPLIFETIME( ABuilding, MovesToBuild );
+	DOREPLIFETIME( ABuilding, MovesToAssemble );
+	DOREPLIFETIME( ABuilding, BuildingIconMedium );
+	DOREPLIFETIME( ABuilding, BuildingDescription );
+	DOREPLIFETIME( ABuilding, BuildActionInfo );
+	DOREPLIFETIME( ABuilding, ImproveLevelFromLocationInfo );
+	DOREPLIFETIME( ABuilding, PropertyChangedFromImproveLevelInfo );
+	DOREPLIFETIME( ABuilding, LocationRequirementsToBuildInfo );
+	DOREPLIFETIME( ABuilding, MainRequirementsToBuildInfo );
+	DOREPLIFETIME( ABuilding, RequirementsToExpendCells );
+	// State properties
+	DOREPLIFETIME( ABuilding, PlayerControllerRef );
+	DOREPLIFETIME( ABuilding, BuildingState );
+	DOREPLIFETIME( ABuilding, CurrentLevel );
+	DOREPLIFETIME( ABuilding, MovesToBuildLeft );
+	DOREPLIFETIME( ABuilding, MovesToAssembleLeft );
+	DOREPLIFETIME( ABuilding, BuildingViews );
+	DOREPLIFETIME( ABuilding, PrefabViews );
+	DOREPLIFETIME( ABuilding, PrefabPreview );
+	DOREPLIFETIME( ABuilding, CellParamsMap );
+	DOREPLIFETIME( ABuilding, InitBuildingLocation );
+}
+
+bool ABuilding::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+	bWroteSomething |= Channel->ReplicateSubobject(CellParamsMap, *Bunch, *RepFlags);
+	return bWroteSomething;
+}
+
+void ABuilding::InitUpgradeBuildingComponents(TArray<UUpgradeBuildingComponent*> Components)
+{
+	for (auto Component : Components)
+	{
+		UpgradeBuildingComponents.Add(Component);
+		Component->SetIsReplicated(true);
+	}
+}
 
 // ----------------- Preview -----------------
 
@@ -25,7 +82,8 @@ void ABuilding::StartPreview()
 	PrefabPreview = InitBuildingView(FHexagonLocation(), false);
 	PrefabPreview->SetState(EBuildingViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
-	CellParamsMap = UCellParamsMap::FromBuilding(this);
+	CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+	PlayerControllerRef->CellParamsMap = CellParamsMap;
 }
 
 EBuildingPlacementReturnState ABuilding::SetPreviewLocation(const FHexagonLocation HexagonLocation)
@@ -72,6 +130,7 @@ void ABuilding::StopPreview()
 	}
 	PrefabViews.Empty();
 	CellParamsMap = nullptr;
+	PlayerControllerRef->CellParamsMap = nullptr;
 }
 
 
@@ -96,7 +155,8 @@ EBuildingPlacementReturnState ABuilding::TryToExpendLocation(const FHexagonLocat
 	{
 		InitBuildingLocation = HexagonLocation;
 		PrefabViews.Add(InitBuildingView(HexagonLocation, true));
-		CellParamsMap = UCellParamsMap::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		PlayerControllerRef->CellParamsMap = CellParamsMap;
 		return EBuildingPlacementReturnState::Succeeded;
 	}
 	if (GetTotalUsedCells() < GetMaxCellCount())
@@ -106,7 +166,8 @@ EBuildingPlacementReturnState ABuilding::TryToExpendLocation(const FHexagonLocat
 			return EBuildingPlacementReturnState::CannotExpandArea;
 		}
 		PrefabViews.Add(InitBuildingView(HexagonLocation, false));
-		CellParamsMap = UCellParamsMap::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		PlayerControllerRef->CellParamsMap = CellParamsMap;
 		return EBuildingPlacementReturnState::Succeeded;
 	}
 	return EBuildingPlacementReturnState::NotEnoughAreaToBuild;
@@ -132,7 +193,8 @@ bool ABuilding::DeleteExpendedLocation(const FHexagonLocation HexagonLocation)
 		{
 			PrefabViews[0]->SetMainBuildingView(true);
 		}
-		CellParamsMap = UCellParamsMap::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		PlayerControllerRef->CellParamsMap = CellParamsMap;
 	}
 	return false;
 }
@@ -341,43 +403,71 @@ bool ABuilding::CanExpendLocation(const FHexagonLocation HexagonLocation) const
 
 // ------------------ Player Move Tick ------------------
 
-void ABuilding::PrePlayerMoveTick_Implementation()
+void ABuilding::StartPreMoveTick_Implementation()
 {
-	FieldController->GetTurnsOrderEventSystem()->BuildingPreMoveStarted.Broadcast(this);
 	if (BuildingState != EBuildingState::Initialized)
 	{
 		for (UUpgradeBuildingComponent* Upgrade : UpgradeBuildingComponents)
 		{
 			Upgrade->PrePlayerMoveTick();
 		}
-
-		FieldController->GetTurnsOrderEventSystem()->BuildingViewPreMoveEnded.AddDynamic(this, &ABuilding::BuildingViewPreMoveEndedEventHandler);
-		BuildingViewMoveCalledCount = 0;
-		DoNextBuildingViewMove(true);
+		StartBuildingViewPreMove(BuildingViews[0]);
 	}
 	else
 	{
-		FieldController->GetTurnsOrderEventSystem()->BuildingPreMoveEnded.Broadcast(this);
+		PlayerControllerRef->EndBuildingPreMove(this);
 	}
 }
 
-void ABuilding::PostPlayerMoveTick_Implementation()
+void ABuilding::StartBuildingViewPreMove(ABuildingView* BuildingView)
 {
-	FieldController->GetTurnsOrderEventSystem()->BuildingPostMoveStarted.Broadcast(this);
+	BuildingView->StartPreMoveTick();
+}
+
+void ABuilding::EndBuildingViewPreMove(ABuildingView* BuildingView)
+{
+	const int Index = BuildingViews.IndexOfByKey(BuildingView);
+	if (Index < BuildingViews.Num() - 1)
+	{
+		StartBuildingViewPreMove(BuildingViews[Index + 1]);
+	}
+	else
+	{
+		PlayerControllerRef->EndBuildingPreMove(this);
+	}
+}
+
+void ABuilding::StartPostMoveTick_Implementation()
+{
 	if (BuildingState != EBuildingState::Initialized)
 	{
 		for (UUpgradeBuildingComponent* Upgrade : UpgradeBuildingComponents)
 		{
 			Upgrade->PostPlayerMoveTick();
 		}
-
-		FieldController->GetTurnsOrderEventSystem()->BuildingViewPostMoveEnded.AddDynamic(this, &ABuilding::BuildingViewPostMoveEndedEventHandler);
-		BuildingViewMoveCalledCount = 0;
-		DoNextBuildingViewMove(false);
+		StartBuildingViewPostMove(BuildingViews[0]);
 	}
 	else
 	{
-		FieldController->GetTurnsOrderEventSystem()->BuildingPostMoveEnded.Broadcast(this);
+		PlayerControllerRef->EndBuildingPostMove(this);
+	}
+}
+
+void ABuilding::StartBuildingViewPostMove(ABuildingView* BuildingView)
+{
+	BuildingView->StartPostMoveTick();
+}
+
+void ABuilding::EndBuildingViewPostMove(ABuildingView* BuildingView)
+{
+	const int Index = BuildingViews.IndexOfByKey(BuildingView);
+	if (Index < BuildingViews.Num() - 1)
+	{
+		StartBuildingViewPostMove(BuildingViews[Index + 1]);
+	}
+	else
+	{
+		PlayerControllerRef->EndBuildingPostMove(this);
 	}
 }
 
@@ -399,39 +489,6 @@ void ABuilding::AssembleMoveTick()
 		{
 			Upgrade->AssembleMoveTick();
 		}
-	}
-}
-
-void ABuilding::DoNextBuildingViewMove(const bool bIsPreMove)
-{
-	if (BuildingViewMoveCalledCount == BuildingViews.Num())
-	{
-		FieldController->GetTurnsOrderEventSystem()->BuildingViewPreMoveEnded.RemoveDynamic(this, &ABuilding::BuildingViewPreMoveEndedEventHandler);
-		if (bIsPreMove) FieldController->GetTurnsOrderEventSystem()->BuildingPreMoveEnded.Broadcast(this);
-		else FieldController->GetTurnsOrderEventSystem()->BuildingPostMoveEnded.Broadcast(this);
-	}
-	else
-	{
-		if (bIsPreMove) BuildingViews[BuildingViewMoveCalledCount]->PrePlayerMoveTick();
-		else BuildingViews[BuildingViewMoveCalledCount]->PostPlayerMoveTick();
-	}
-}
-
-void ABuilding::BuildingViewPreMoveEndedEventHandler(ABuildingView* BuildingView)
-{
-	if (BuildingViews.Contains(BuildingView))
-	{
-		BuildingViewMoveCalledCount++;
-		DoNextBuildingViewMove(true);
-	}
-}
-
-void ABuilding::BuildingViewPostMoveEndedEventHandler(ABuildingView* BuildingView)
-{
-	if (BuildingViews.Contains(BuildingView))
-	{
-		BuildingViewMoveCalledCount++;
-		DoNextBuildingViewMove(false);
 	}
 }
 

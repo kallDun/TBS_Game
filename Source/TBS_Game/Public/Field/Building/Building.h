@@ -9,7 +9,7 @@
 #include "Field/Anchor/TerrainRules.h"
 #include "Building.generated.h"
 
-class UCellParamsMap;
+class UCellParamsMapGenerator;
 class ABuildingView;
 class AGamePlayerController;
 enum class EBuildingState : uint8;
@@ -24,107 +24,117 @@ class TBS_GAME_API ABuilding : public AGameActor
 	GENERATED_BODY()
 
 public:
-	ABuilding() {}
+	ABuilding()
+	{
+		bReplicates = true;
+		AActor::SetReplicateMovement(true);
+	}
+
+	UFUNCTION()
 	void Init(AFieldController* Field, AGamePlayerController* PlayerControllerOwner);
+
+private:
+	UFUNCTION(BlueprintCallable)
+	void InitUpgradeBuildingComponents(TArray<class UUpgradeBuildingComponent*> Components);
 
 public:
 	// components
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Components")
-	TArray<class UUpgradeBuildingComponent*> UpgradeBuildingComponents = {};
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Components", Replicated)
+	TArray<UUpgradeBuildingComponent*> UpgradeBuildingComponents = {};
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	FName BuildingName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	EBuildingType BuildingType;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	TSubclassOf<ABuildingView> BuildingViewClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	USceneComponent* BuildingMeshRef = nullptr;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	TArray<FBuildingProperty> InitProperties = {};
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	bool bCanBuildWithOtherBuildings = false;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = -5, ClampMax = 5, EditCondition = bCanBuildWithOtherBuildings), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = -5, ClampMax = 5, EditCondition = bCanBuildWithOtherBuildings), Category = "Building Main", Replicated)
 	int AffectingOnOtherBuildingImproveLevel = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	TArray<FAnchorPoint> AnchorPoints = {};
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	FTerrainRules TerrainRules;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0f), Category = "Level 1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0f), Category = "Level 1", Replicated)
 	float InitMaxHitPoints;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 10), Category = "Level 1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 10), Category = "Level 1", Replicated)
 	int InitMaxCellCount = 1;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 10), Category = "Level 1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 10), Category = "Level 1", Replicated)
 	int MovesToBuild = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0, ClampMax = 10), Category = "Level 1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0, ClampMax = 10), Category = "Level 1", Replicated)
 	int MovesToAssemble = 0;
 	
 	// info properties	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)
 	UTexture2D* BuildingIconMedium;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)
 	FName BuildingDescription;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)
 	FName BuildActionInfo;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)
 	FName ImproveLevelFromLocationInfo;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)
 	FName PropertyChangedFromImproveLevelInfo;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)
 	FName LocationRequirementsToBuildInfo;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)
 	FName MainRequirementsToBuildInfo;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)
 	FName RequirementsToExpendCells;
 	
 	// current state
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	AGamePlayerController* PlayerControllerRef = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	EBuildingState BuildingState = EBuildingState::Initialized;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	int CurrentLevel = 1;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	int MovesToBuildLeft;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	int MovesToAssembleLeft;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	TArray<ABuildingView*> BuildingViews = {};
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	TArray<ABuildingView*> PrefabViews = {};
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	ABuildingView* PrefabPreview;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	UCellParamsMap* CellParamsMap = nullptr;
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
+	class UCellParamsTwoDimArray* CellParamsMap = nullptr;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	FHexagonLocation InitBuildingLocation;
 
 // getters
@@ -188,18 +198,31 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool CanExpendLocation(FHexagonLocation HexagonLocation) const;
 
+	UFUNCTION()
+	void ChangeBuildingViewsState(EBuildingViewState NewState);
+
+// Move tick
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void PrePlayerMoveTick();
+	void StartPreMoveTick();
+
+	UFUNCTION()
+	void StartBuildingViewPreMove(ABuildingView* BuildingView);
+
+	UFUNCTION()
+	void EndBuildingViewPreMove(ABuildingView* BuildingView);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void PostPlayerMoveTick();
+	void StartPostMoveTick();
+
+	UFUNCTION()
+	void StartBuildingViewPostMove(ABuildingView* BuildingView);
+
+	UFUNCTION()
+	void EndBuildingViewPostMove(ABuildingView* BuildingView);
 
 	UFUNCTION()
 	void AssembleMoveTick();
 
-	UFUNCTION()
-	void ChangeBuildingViewsState(EBuildingViewState NewState);
-	
 private:
 	UFUNCTION()
 	ABuildingView* InitBuildingView(FHexagonLocation HexagonLocation, const bool bIsMainView);
@@ -213,23 +236,13 @@ public:
 	bool CanBuild() const;
 	
 protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
+	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void ChangePropertiesAccordingToImproveLevel(int ImproveLevel); // TODO: add by default event to increase moves to build
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void OnBuildAction();
-
-// turns order
-private:
-	UPROPERTY()
-	int BuildingViewMoveCalledCount = 0;
-
-	UFUNCTION()
-	void DoNextBuildingViewMove(bool bIsPreMove);
-	
-	UFUNCTION()
-	void BuildingViewPreMoveEndedEventHandler(ABuildingView* BuildingView);
-	
-	UFUNCTION()
-	void BuildingViewPostMoveEndedEventHandler(ABuildingView* BuildingView);
 };

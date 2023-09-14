@@ -3,10 +3,7 @@
 #include "Camera/CameraComponent.h"
 #include "Field/FieldActor.h"
 #include "Field/Building/Building.h"
-#include "Field/Unit/Unit.h"
-#include "Field/Hero/Hero.h"
 #include "Field/Controller/FieldController.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
 #include "Field/ReturnState/BuildUpgradeReturnState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -16,7 +13,7 @@
 AGamePlayerController::AGamePlayerController()
 {
 	bReplicates = true;
-	SetReplicatingMovement(true);
+	ACharacter::SetReplicateMovement(true);
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(RootComponent);
 	Camera->SetRelativeRotation(FRotator(-80, 0, 0));
@@ -25,31 +22,17 @@ AGamePlayerController::AGamePlayerController()
 void AGamePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	const FString Message = FString::Printf(TEXT("AGamePlayerController BeginPlay, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Message);
-	
 	if (AActor* GameState = UGameplayStatics::GetGameState(GetWorld()))
 	{
-		FieldController = Cast<AFieldController>(GameState);
-		if (FieldController)
+		if (const auto Field = Cast<AFieldController>(GameState))
 		{
-			FieldController->AddPlayerToList(this);
+			FieldController = Field;
+			const int Index = Field->GetCurrentPlayersCount();
+			if (Owner) Init(Index);
+
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, FString::Printf(TEXT("Player %d BeginPlay, Is Owner = %hhd"), Index, Owner != nullptr));
 		}
 	}
-	if (Owner)
-	{
-		SetInitializationStateLoaded();
-	}
-}
-
-void AGamePlayerController::SetInitializationStateLoaded_Implementation()
-{
-	InitializationState = EPlayerInitializationState::Loaded;
-	const FString Message = FString::Printf(TEXT("PlayerInitializationState::Loaded, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, Message);
 }
 
 
@@ -58,39 +41,34 @@ void AGamePlayerController::SetInitializationStateLoaded_Implementation()
 void AGamePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME( AGamePlayerController, InitializationState );
+	DOREPLIFETIME( AGamePlayerController, PlayerTurnType );
+	DOREPLIFETIME( AGamePlayerController, CenterLocation );
 	DOREPLIFETIME( AGamePlayerController, EconomicPoints );
 	DOREPLIFETIME( AGamePlayerController, ReligiousFollowers );
-	DOREPLIFETIME( AGamePlayerController, MovesLeft );
 	DOREPLIFETIME( AGamePlayerController, PlayerNumber );
-	DOREPLIFETIME( AGamePlayerController, CenterLocation );
+	DOREPLIFETIME( AGamePlayerController, MovesLeft );
+	DOREPLIFETIME( AGamePlayerController, BuildingPrefabs );
+	DOREPLIFETIME( AGamePlayerController, Buildings );
+	DOREPLIFETIME( AGamePlayerController, CellParamsMap );
 }
 
 // -------------------------------- Initialization --------------------------------
 
-void AGamePlayerController::Init_Implementation(const int PlayerNum, const FHexagonLocation CenterHexLocation)
+void AGamePlayerController::Init(const int Index)
 {
-	InitPlayerNumberAndCenterLocation(PlayerNum, CenterHexLocation);
-	SetActorLocationAndRotation(CenterHexLocation, FRotator(0, 90, 0));
-	InitInputComponent();
-	InitBuildingPrefabs();
-	InitEventHandlersBP(FieldController->GetTurnsOrderEventSystem());
-	PlayerInitializedEvent.Broadcast();
-	InitializationState = EPlayerInitializationState::Initialized;
-
-	const FString Message2 = FString::Printf(TEXT("Player Init, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No");
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Message2);
+	InitInputComponent(); // Client
+	const FHexagonLocation CenterHexLocation = FieldController->GetPlayerCenterLocation(Index);
+	SetActorLocationAndRotation(CenterHexLocation, FRotator(0, 90, 0)); // Client
+	InitState(Index, CenterHexLocation); // Server
 }
 
-void AGamePlayerController::InitPlayerNumberAndCenterLocation_Implementation(const int PlayerNum, const FHexagonLocation HexagonLocation)
+void AGamePlayerController::InitState_Implementation(const int PlayerNum, const FHexagonLocation CenterHexLocation)
 {
 	PlayerNumber = PlayerNum;
-	CenterLocation = HexagonLocation;
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow,
-		FString::Printf(TEXT("PlayerNum = %d\nIsServer = %hs"),
-		PlayerNum, GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No"));
+	CenterLocation = CenterHexLocation;
+	InitBuildingPrefabs();
+	FieldController->AddPlayerToList(this);
+	PlayerInitializeFinishedBroadcast();
 }
 
 void AGamePlayerController::SetActorLocationAndRotation(const FHexagonLocation HexagonLocation, const FRotator& WorldRotation)
@@ -109,7 +87,7 @@ void AGamePlayerController::SetActorLocationAndRotationServer_Implementation(con
 	SetActorRotation(WorldRotation);
 }
 
-void AGamePlayerController::InitBuildingPrefabs_Implementation()
+void AGamePlayerController::InitBuildingPrefabs()
 {
 	TArray<TSubclassOf<ABuilding>> BuildingPrefabsClasses = FieldController->GetBuildingClasses();
 	for (const TSubclassOf<ABuilding> BuildingClass : BuildingPrefabsClasses)
@@ -118,103 +96,105 @@ void AGamePlayerController::InitBuildingPrefabs_Implementation()
 	}
 }
 
-void AGamePlayerController::InitUnitPrefabs_Implementation()
-{
-	TArray<TSubclassOf<AUnit>> UnitPrefabsClasses = FieldController->GetUnitClasses();
-	for (const TSubclassOf<AUnit> UnitClass : UnitPrefabsClasses)
-	{
-		UnitPrefabs.Add(InitUnitPrefab(UnitClass));
-	}
-}
-
-void AGamePlayerController::InitHeroPrefabs_Implementation()
-{
-	TArray<TSubclassOf<AHero>> HeroPrefabsClasses = FieldController->GetHeroClasses();
-	for (const TSubclassOf<AHero> HeroClass : HeroPrefabsClasses)
-	{
-		HeroPrefabs.Add(InitHeroPrefab(HeroClass));
-	}
-}
-
 ABuilding* AGamePlayerController::InitBuildingPrefab(const TSubclassOf<ABuilding> BuildingClass)
 {
 	ABuilding* BuildingPrefab = GetWorld()->SpawnActor<ABuilding>(BuildingClass);
 	BuildingPrefab->Init(FieldController, this);
+	BuildingPrefab->Owner = this;
 	return BuildingPrefab;
 }
 
-AUnit* AGamePlayerController::InitUnitPrefab(const TSubclassOf<AUnit> UnitClass)
+// ----------------------------------- Events ----------------------------------
+
+void AGamePlayerController::PlayerInitializeFinishedBroadcast_Implementation()
 {
-	AUnit* UnitPrefab = GetWorld()->SpawnActor<AUnit>(UnitClass);
-	UnitPrefab->Init(FieldController, this);
-	return UnitPrefab;
+	PlayerInitializeFinished.Broadcast();
 }
 
-AHero* AGamePlayerController::InitHeroPrefab(const TSubclassOf<AHero> HeroClass)
+void AGamePlayerController::PlayerTurnTypeChangedBroadcast_Implementation(const EPlayerTurnType NewPlayerTurnType)
 {
-	AHero* HeroPrefab = GetWorld()->SpawnActor<AHero>(HeroClass);
-	HeroPrefab->Init(FieldController, this);
-	return HeroPrefab;
+	PlayerTurnTypeChanged.Broadcast(NewPlayerTurnType);
+}
+
+void AGamePlayerController::PlayerTurnEndedBroadcast_Implementation()
+{
+	FieldController->OnPlayerTurnEnded.Broadcast(this);
 }
 
 
 // -------------------------------- Player turn --------------------------------
 
-void AGamePlayerController::StartTurn_Implementation()
-{
-	FieldController->GetTurnsOrderEventSystem()->PlayerTurnStarted.Broadcast(this);
-	MovesLeft = FieldController->GetMovesPerTurn();
-	// TODO: add realization for units move
-	// TODO: add realization for check win condition
+bool AGamePlayerController::CheckIfPlayerMove() const { return PlayerTurnType == EPlayerTurnType::PlayerMove; }
 
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, FString::Printf(
-		TEXT("StartTurn, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No"));
-	
+bool AGamePlayerController::CanUseMove() const { return MovesLeft > 0; }
+
+void AGamePlayerController::StartTurn()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d TURN STARTED"), PlayerNumber));
+
+	MovesLeft = FieldController->GetMovesPerTurn();
+	//StartUnitsMove();
 	StartBuildingsAssembling();
 }
 
 void AGamePlayerController::EndTurn()
 {
-	SetPlayerTurnType(EPlayerTurnType::Waiting);	
-	FieldController->GetTurnsOrderEventSystem()->PlayerTurnEnded.Broadcast(this);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d TURN ENDED"), PlayerNumber));
+	
+	SetPlayerTurnType(EPlayerTurnType::Waiting);
+	PlayerTurnEndedBroadcast();
 }
-
-bool AGamePlayerController::CanUseMove() const
+ 
+void AGamePlayerController::SetPlayerTurnType(const EPlayerTurnType NewPlayerTurnType)
 {
-	return MovesLeft > 0;
+	PlayerTurnTypeChangedBroadcast(NewPlayerTurnType);
+	PlayerTurnType = NewPlayerTurnType;
 }
 
 bool AGamePlayerController::TryToUseMove()
 {
-	if (MovesLeft > 0)
+	if (PlayerTurnType == EPlayerTurnType::PlayerMove && MovesLeft > 0)
 	{
 		MovesLeft--;
-		if (MovesLeft == 0)
-		{
-			StartBuildingsPostMove();
-		}
 		return true;
 	}
 	return false;
 }
 
-void AGamePlayerController::StartPlayersMove()
+void AGamePlayerController::Tick(float DeltaSeconds)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, FString::Printf(
-		TEXT("StartPlayersMove, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No"));
-	SetPlayerTurnType(EPlayerTurnType::PlayerMove);
+	Super::Tick(DeltaSeconds);
+	if (HasAuthority())
+	{
+		if (PlayerTurnType == EPlayerTurnType::PlayerMove && MovesLeft == 0)
+		{
+			StartBuildingsPostMove();
+		}
+	}
+}
+
+// -------------------------------- Move cycle ---------------------------------
+
+void AGamePlayerController::StartUnitsMove()
+{
+	// TODO: implement with Units
+}
+
+void AGamePlayerController::StartUnitMove(AUnit* Unit)
+{
+	// TODO: implement with Units
+}
+
+void AGamePlayerController::EndUnitMove(AUnit* Unit)
+{
+	// TODO: implement with Units
 }
 
 void AGamePlayerController::StartBuildingsAssembling()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start buildings ASSEMBLING"), PlayerNumber));
+	
 	SetPlayerTurnType(EPlayerTurnType::BuildingsAssembling);
-	
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, FString::Printf(
-		TEXT("StartBuildingsAssembling, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No"));
-	
 	for (ABuilding* Building : Buildings)
 	{
 		Building->AssembleMoveTick();		
@@ -224,84 +204,71 @@ void AGamePlayerController::StartBuildingsAssembling()
 
 void AGamePlayerController::StartBuildingsPreMove()
 {
-	SetPlayerTurnType(EPlayerTurnType::BuildingsPreMove);
-	BuildingMoveCalledCount = 0;
-	FieldController->GetTurnsOrderEventSystem()->BuildingPreMoveEnded.AddDynamic(this, &AGamePlayerController::BuildingPreMoveEndedEventHandler);
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, FString::Printf(
-		TEXT("StartBuildingsPreMove, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No"));
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start buildings PRE MOVE"), PlayerNumber));
 	
-	DoNextBuildingPreMove();
+	SetPlayerTurnType(EPlayerTurnType::BuildingsPreMove);
+	if (Buildings.Num() > 0)
+	{
+		StartBuildingPreMove(Buildings[0]);
+	}
+	else EndBuildingPreMove(nullptr);
+}
+
+void AGamePlayerController::StartBuildingPreMove(ABuilding* Building)
+{
+	Building->StartPreMoveTick();
+}
+
+void AGamePlayerController::EndBuildingPreMove(ABuilding* Building)
+{
+	if (Building)
+	{
+		const int Index = Buildings.IndexOfByKey(Building);
+		if (Index < Buildings.Num() - 1)
+		{
+			StartBuildingPreMove(Buildings[Index + 1]);
+		}
+		else StartPlayerMove();
+	}
+	else StartPlayerMove();
+}
+
+void AGamePlayerController::StartPlayerMove()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d MOVE STARTED"), PlayerNumber));
+	SetPlayerTurnType(EPlayerTurnType::PlayerMove);
 }
 
 void AGamePlayerController::StartBuildingsPostMove()
 {
-	SetPlayerTurnType(EPlayerTurnType::BuildingsPostMove);
-	BuildingMoveCalledCount = 0;
-	FieldController->GetTurnsOrderEventSystem()->BuildingPostMoveEnded.AddDynamic(this, &AGamePlayerController::BuildingPostMoveEndedEventHandler);
-	DoNextBuildingPostMove();
-}
-
-void AGamePlayerController::DoNextBuildingPreMove()
-{
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, FString::Printf(
-		TEXT("DoNextBuildingPreMove, Owner = %s\nIsServer = %hs"),
-		*Owner.GetName(), GetWorld()->GetNetMode() == NM_ListenServer ? "Yes" : "No"));
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start buildings POST MOVE"), PlayerNumber));
 	
-	if (BuildingMoveCalledCount == Buildings.Num())
+	SetPlayerTurnType(EPlayerTurnType::BuildingsPostMove);
+	if (Buildings.Num() > 0)
 	{
-		FieldController->GetTurnsOrderEventSystem()->BuildingPreMoveEnded.RemoveDynamic(this, &AGamePlayerController::BuildingPreMoveEndedEventHandler);
-		StartPlayersMove();
+		StartBuildingPostMove(Buildings[0]);
 	}
-	else
-	{
-		Buildings[BuildingMoveCalledCount]->PrePlayerMoveTick();
-	}
+	else StartBuildingPostMove(nullptr);
 }
 
-void AGamePlayerController::DoNextBuildingPostMove()
+void AGamePlayerController::StartBuildingPostMove(ABuilding* Building)
 {
-	if (BuildingMoveCalledCount == Buildings.Num())
-	{
-		FieldController->GetTurnsOrderEventSystem()->BuildingPostMoveEnded.RemoveDynamic(this, &AGamePlayerController::BuildingPostMoveEndedEventHandler);
-		EndTurn();
-	}
-	else
-	{
-		Buildings[BuildingMoveCalledCount]->PostPlayerMoveTick();
-	}
+	Building->StartPostMoveTick();
 }
 
-void AGamePlayerController::BuildingPreMoveEndedEventHandler(ABuilding* Building)
+void AGamePlayerController::EndBuildingPostMove(ABuilding* Building)
 {
-	if (Buildings.Contains(Building))
+	if (Building)
 	{
-		BuildingMoveCalledCount++;
-		DoNextBuildingPreMove();
+		const int Index = Buildings.IndexOfByKey(Building);
+		if (Index < Buildings.Num() - 1)
+		{
+			StartBuildingPostMove(Buildings[Index + 1]);
+		}
+		else EndTurn();
 	}
+	else EndTurn();
 }
-
-void AGamePlayerController::BuildingPostMoveEndedEventHandler(ABuilding* Building)
-{
-	if (Buildings.Contains(Building))
-	{
-		BuildingMoveCalledCount++;
-		DoNextBuildingPostMove();
-	}
-}
-
-void AGamePlayerController::SetPlayerTurnType(const EPlayerTurnType NewPlayerTurnType)
-{
-	FieldController->GetTurnsOrderEventSystem()->PlayerTurnTypeChanged.Broadcast(this, NewPlayerTurnType);
-	PlayerTurnType = NewPlayerTurnType;
-}
-
-bool AGamePlayerController::CheckIfPlayerMove() const
-{
-	return PlayerTurnType == EPlayerTurnType::PlayerMove;
-}
-
 
 // -------------------------------- Actions --------------------------------
 
@@ -319,22 +286,6 @@ EBuildUpgradeReturnState AGamePlayerController::ConstructBuilding(ABuilding* Bui
 		return ReturnState;
 	}
 	return EBuildUpgradeReturnState::Unknown;
-}
-
-EUnitUpgradeReturnState AGamePlayerController::ConstructUnit(AUnit* Unit)
-{
-	if (UnitPrefabs.Contains(Unit))
-	{
-		const EUnitUpgradeReturnState ReturnState = Unit->TryToBuild();
-		if (ReturnState == EUnitUpgradeReturnState::Succeeded)
-		{
-			UnitPrefabs.Remove(Unit);
-			Units.Add(Unit);
-			UnitPrefabs.Add(InitUnitPrefab(Unit->GetClass()));
-		}
-		return ReturnState;
-	}
-	return EUnitUpgradeReturnState::Unknown;
 }
 
 
@@ -374,4 +325,3 @@ AActor* AGamePlayerController::GetActorUnderCursor() const
 	}
 	return nullptr;
 }
-
