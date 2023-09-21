@@ -2,7 +2,6 @@
 #include "CoreMinimal.h"
 #include <Components/ActorComponent.h>
 #include "Building.h"
-#include "BuildingProperty.h"
 #include "UpgradingState.h"
 #include "UpgradeBuildingComponent.generated.h"
 
@@ -32,7 +31,7 @@ public:
 	int MovesToAssemble = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Replicated)
-	TArray<FBuildingProperty> Properties = {};
+	TArray<FValueProperty> Properties = {};
 	
 	// info properties
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Info", Replicated)

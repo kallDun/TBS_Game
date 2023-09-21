@@ -1,8 +1,5 @@
-
-
 #include "Field/Unit/UnitView.h"
 #include "Field/Controller/FieldController.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
 #include "Field/Unit/Unit.h"
 
 

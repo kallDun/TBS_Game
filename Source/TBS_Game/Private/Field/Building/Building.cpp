@@ -6,8 +6,8 @@
 #include "Field/Building/BuildingView.h"
 #include "Field/Building/UpgradeBuildingComponent.h"
 #include "Field/Controller/FieldController.h"
-#include "Field/ReturnState/BuildingPlacementReturnState.h"
-#include "Field/ReturnState/BuildUpgradeReturnState.h"
+#include "Field/Utils/BuildingPlacementReturnState.h"
+#include "Field/Utils/BuildUpgradeReturnState.h"
 #include "Player/GamePlayerController.h"
 #include "Field/FieldActor.h"
 #include "Field/Anchor/CellParametersType.h"
@@ -28,7 +28,6 @@ void ABuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME( ABuilding, BuildingName );
 	DOREPLIFETIME( ABuilding, BuildingType );
 	DOREPLIFETIME( ABuilding, BuildingViewClass );
-	DOREPLIFETIME( ABuilding, BuildingMeshRef );
 	DOREPLIFETIME( ABuilding, InitProperties );
 	DOREPLIFETIME( ABuilding, bCanBuildWithOtherBuildings );
 	DOREPLIFETIME( ABuilding, AffectingOnOtherBuildingImproveLevel );
@@ -495,17 +494,17 @@ void ABuilding::AssembleMoveTick()
 
 // ------------------ Getters ------------------
 
-TArray<FBuildingProperty> ABuilding::GetProperties(const bool UseCurrentLevel, const int CustomLevel) const
+TArray<FValueProperty> ABuilding::GetProperties(const bool UseCurrentLevel, const int CustomLevel) const
 {
 	TMap<FString, float> Map = {};
-	for (FBuildingProperty Property : InitProperties)
+	for (FValueProperty Property : InitProperties)
 	{
 		Map.Add(Property.Name.ToString(), Property.Value);
 	}
 	
 	for (UUpgradeBuildingComponent* Upgrade : GetUpgradeComponentsWithLevel(UseCurrentLevel ? CurrentLevel : CustomLevel, UseCurrentLevel))
 	{
-		for (FBuildingProperty Property : Upgrade->Properties)
+		for (FValueProperty Property : Upgrade->Properties)
 		{
 			if (Map.Contains(Property.Name.ToString()))
 			{
@@ -518,10 +517,10 @@ TArray<FBuildingProperty> ABuilding::GetProperties(const bool UseCurrentLevel, c
 		}
 	}
 
-	TArray<FBuildingProperty> Result = {};
+	TArray<FValueProperty> Result = {};
 	for (auto& Elem : Map)
 	{
-		Result.Add(FBuildingProperty(FName(Elem.Key), Elem.Value));
+		Result.Add(FValueProperty(FName(Elem.Key), Elem.Value));
 	}
 	return Result;
 }
@@ -548,7 +547,7 @@ int ABuilding::GetMaxCellCount(const bool UseCurrentLevel, const int CustomLevel
 
 float ABuilding::GetPropertyValue(const FName PropertyName, const float ValueByDefault) const
 {
-	TArray<FBuildingProperty> Properties = GetProperties(true);
+	TArray<FValueProperty> Properties = GetProperties(true);
 	for (auto Property : Properties)
 	{
 		if (Property.Name == PropertyName)

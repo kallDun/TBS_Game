@@ -1,7 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include <GameFramework/Actor.h>
-#include "BuildingProperty.h"
+#include "Field/Utils/ValueProperty.h"
 #include "BuildingState.h"
 #include "Field/GameActor.h"
 #include "Field/HexagonLocation.h"
@@ -50,12 +50,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	TSubclassOf<ABuildingView> BuildingViewClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
-	USceneComponent* BuildingMeshRef = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
-	TArray<FBuildingProperty> InitProperties = {};
+	TArray<FValueProperty> InitProperties = {};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	bool bCanBuildWithOtherBuildings = false;
@@ -68,6 +65,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	FTerrainRules TerrainRules;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0.f, ClampMax = 1.f), Category = "Unit Main")
+	float NecessaryCellSpace = .7f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0f), Category = "Level 1", Replicated)
 	float InitMaxHitPoints;
@@ -140,7 +140,7 @@ public:
 // getters
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	TArray<FBuildingProperty> GetProperties(bool UseCurrentLevel = true, int CustomLevel = -1) const;
+	TArray<FValueProperty> GetProperties(bool UseCurrentLevel = true, int CustomLevel = -1) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetMaxHitPoints(bool UseCurrentLevel = true, int CustomLevel = -1) const;

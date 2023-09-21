@@ -3,10 +3,12 @@
 #include <GameFramework/Actor.h>
 #include "Field/FieldActor.h"
 #include "Field/Anchor/TerrainRules.h"
-#include "UnitState.h"
+#include "Field/Utils/ValueProperty.h"
+#include "Field/Anchor/AnchorPoint.h"
 #include "UnitView.h"
 #include "Unit.generated.h"
 
+class ABuildingView;
 class ACell;
 class ABuilding;
 class AUnitView;
@@ -18,7 +20,7 @@ enum class EUnitPlacementReturnState : uint8;
 enum class EUnitUpgradeReturnState : uint8;
 
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = (Unit))
-class TBS_GAME_API AUnit : public AFieldActor
+class TBS_GAME_API AUnit : public AGameActor
 {
 	GENERATED_BODY()
 
@@ -33,15 +35,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Unit Main")
 	EUnitPillarType UnitType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Unit Main")
-	USceneComponent* UnitMeshRef = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 10), Category = "Unit Main")
+	int Level = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Unit Main")
 	TSubclassOf<AUnitView> UnitViewClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	TArray<FValueProperty> InitProperties = {};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main")
+	TArray<FAnchorPoint> AnchorPoints = {};
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Unit Main")
 	FTerrainRules TerrainRules;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0.f, ClampMax = 1.f), Category = "Unit Main")
+	float NecessaryCellSpace = .25f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Unit Main")
 	float InitMaxHitPoints;
 
@@ -49,45 +60,33 @@ public:
 	float InitMaxDefence;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = "0.5", ClampMax = "5"), Category = "Unit Main")
-	float NumSteps;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = "1", ClampMax = "3"), Category = "Unit Main")
-	int Level = 1;
+	float InitMovement;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = "0", ClampMax = "10"), Category = "Unit Main")
+	int MovesToAssemble = 0;
 
 	// info properties
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Unit Info")
-	UTexture2D* UnitIconSmall;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Unit Info")
 	UTexture2D* UnitIconMedium;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Unit Info")
 	FName UnitDescription;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Unit Info")
-	FName UnitActionInfo;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Unit Info")
+	FName LocationRequirementsToSpawnInfo;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Unit Info")
 	FName MainRequirementsToSpawnInfo;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Unit Info")
-	FName ImproveLevelFromLocationInfo;
-
 	// current state
 	UPROPERTY(BlueprintGetter=GetPlayerControllerRef, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
 	AGamePlayerController* PlayerControllerRef = nullptr;
-	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	FHexagonLocation InitHeroLocation;
-
-	UPROPERTY(BlueprintGetter=GetUnitState, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	EUnitState UnitState = EUnitState::Initialized;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
 	AUnitView* PrefabPreview;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	TArray<AUnitView*> PrefabViews = {};
+	TArray<AUnitView*> UnitViews = {};
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
 	UCellParamsMapGenerator* CellParamsMap = nullptr;
@@ -97,61 +96,24 @@ public:
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AGamePlayerController* GetPlayerControllerRef() const { return PlayerControllerRef; }
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	float GetMaxHitPoints() const { return InitMaxHitPoints; };
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	EUnitState GetUnitState() const { return UnitState; }
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	float GetMaxDefence() const { return InitMaxDefence; }
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	int GetStepsNumber() const { return NumSteps; }
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	float GetCurrentHitPoints() const { return CurrentHitPoints; }
 
 // Methods
 public:
 	UFUNCTION(BlueprintCallable)
-	void StartPreview();
+	EUnitPlacementReturnState SetPreviewLocation(FHexagonLocation HexagonLocation);
 
 	UFUNCTION(BlueprintCallable)
 	void StopPreview();
 
 	UFUNCTION(BlueprintCallable)
-	EUnitPlacementReturnState SetPreviewLocation(FHexagonLocation HexagonLocation);
-	
-	UFUNCTION(BlueprintCallable)
-	static EUnitUpgradeReturnState TryToBuild();
-
-	UFUNCTION(BlueprintCallable)
-	bool DeleteExpendedLocation(FHexagonLocation HexagonLocation);
-
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	FHexagonLocation InitUnitLocation;
-	
-	UFUNCTION(BlueprintCallable)
-	bool CanSpawnInBuilding(ABuilding* Building);
+	EUnitUpgradeReturnState TryToPlace();
 
 	UFUNCTION(BlueprintCallable)
 	bool CanBuildOnLocation(FHexagonLocation HexagonLocation);
-
-	UFUNCTION(BlueprintCallable)
-	void ReceiveDamage(float DamageAmount);
 	
 	UFUNCTION(BlueprintCallable)
 	int GetImproveLevelFromLocation(FHexagonLocation HexagonLocation) const;
+
+protected:
 	
-private:
-	UPROPERTY(BlueprintGetter=GetCurrentHitPoints, meta = (AllowPrivateAccess = "true"), Category = "Properties")
-	float CurrentHitPoints;
-
-	UPROPERTY(BlueprintGetter=GetCurrentHitPoints, meta = (AllowPrivateAccess = "true"), Category = "Properties")
-	float CurrentDefence;
-
-	UFUNCTION()
-	AUnitView* InitUnitView(FHexagonLocation HexagonLocation);
 };

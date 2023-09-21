@@ -3,7 +3,7 @@
 #include <Net/UnrealNetwork.h>
 
 #include "Field/Building/BuildingViewState.h"
-#include "Field/ReturnState/BuildUpgradeReturnState.h"
+#include "Field/Utils/BuildUpgradeReturnState.h"
 
 
 void UUpgradeBuildingComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -102,7 +102,7 @@ void UUpgradeBuildingComponent::AssembleMoveTick()
 
 float UUpgradeBuildingComponent::GetPropertyValue(FName PropertyName, float ValueByDefault) const
 {
-	for (FBuildingProperty Property : Properties)
+	for (FValueProperty Property : Properties)
 	{
 		if (Property.Name == PropertyName)
 		{
@@ -114,7 +114,7 @@ float UUpgradeBuildingComponent::GetPropertyValue(FName PropertyName, float Valu
 
 bool UUpgradeBuildingComponent::SetPropertyValue(const FName PropertyName, const float Value) const
 {
-	for (FBuildingProperty Property : Properties)
+	for (FValueProperty Property : Properties)
 	{
 		if (Property.Name == PropertyName)
 		{
