@@ -10,9 +10,7 @@ enum class EUnitPlacementReturnState : uint8
 	BuildingRequirementsNotMatch = 3 		UMETA(DisplayName = "Building Requirements Not Match"),
 	LocationNotAvailableForPlayer = 4		UMETA(DisplayName = "Location Not Available For Player"),
 	LocationOccupied = 5					UMETA(DisplayName = "Location Occupied"),
-	NotEnoughAreaToBuild = 6 				UMETA(DisplayName = "Not Enough Area To Build"),
-	CannotExpandArea = 7					UMETA(DisplayName = "Cannot Expand Area"),
-	NotEnoughMoves = 8						UMETA(DisplayName = "Not Enough Moves"),
-	ReachedLimit = 9						UMETA(DisplayName = "Limit has reached"),
-	Succeeded = 10							UMETA(DisplayName = "Succeeded")
+	NotEnoughMoves = 6						UMETA(DisplayName = "Not Enough Moves"),
+	ReachedLimit = 7						UMETA(DisplayName = "Limit has reached"),
+	Succeeded = 8							UMETA(DisplayName = "Succeeded")
 };

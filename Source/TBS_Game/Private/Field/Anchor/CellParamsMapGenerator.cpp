@@ -21,6 +21,12 @@ UCellParamsTwoDimArray* UCellParamsMapGenerator::FromBuilding(const ABuilding* B
 	return Cells;
 }
 
+UCellParamsTwoDimArray* UCellParamsMapGenerator::FromUnit(const AUnit* Unit)
+{
+	UCellParamsTwoDimArray* Cells = nullptr;
+	return Cells;
+}
+
 UCellParamsTwoDimArray* UCellParamsMapGenerator::AddArrays(UCellParamsTwoDimArray* MapA, UCellParamsTwoDimArray* MapB)
 {
 	if (!MapA) return MapB;

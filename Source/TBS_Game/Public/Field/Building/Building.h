@@ -66,7 +66,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Main", Replicated)
 	FTerrainRules TerrainRules;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0.f, ClampMax = 1.f), Category = "Unit Main")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0.f, ClampMax = 1.f), Category = "Unit Main", Replicated)
 	float NecessaryCellSpace = .7f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 0f), Category = "Level 1", Replicated)
@@ -245,4 +245,5 @@ protected:
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void OnBuildAction();
+	
 };

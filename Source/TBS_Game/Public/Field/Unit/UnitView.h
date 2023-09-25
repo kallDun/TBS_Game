@@ -1,5 +1,4 @@
 #pragma once
-
 #include "CoreMinimal.h"
 #include "UnitViewState.h"
 #include "Field/FieldActor.h"
@@ -14,7 +13,11 @@ class TBS_GAME_API AUnitView : public AFieldActor
 	GENERATED_BODY()
 
 public:
-	AUnitView() {}
+	AUnitView()
+	{
+		bReplicates = true;
+		AActor::SetReplicateMovement(true);
+	}
 	void Init(AFieldController* Field, class AUnit* UnitReference, FHexagonLocation HexagonLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
@@ -22,38 +25,35 @@ public:
 	
 	// Current state properties
 protected:
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	bool bAutomaticallyEndPrePlayerMove = true;
-	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	bool bAutomaticallyEndPostPlayerMove = true;
-	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	bool bCanRotate = true;
-	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated, ReplicatedUsing=OnRep_UnitRef)
 	AUnit* UnitRef;
 	
-	UPROPERTY(BlueprintGetter=GetCurrentHitPoints, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
+	UPROPERTY(BlueprintGetter=GetCurrentHitPoints, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	float CurrentHitPoints;
+	
+	UPROPERTY(BlueprintGetter=GetCurrentDefence, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
+	float CurrentDefence;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties")
-	EUnitViewState ViewState = EUnitViewState::Initialize;
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
+	EUnitViewState State = EUnitViewState::Initialize;
 
 	
 // Getters & Setters
 public:
 	UFUNCTION(BlueprintGetter)
 	float GetCurrentHitPoints() const { return CurrentHitPoints; }
+	
+	UFUNCTION(BlueprintGetter)
+	float GetCurrentDefence() const { return CurrentDefence; }
 
 	UFUNCTION(BlueprintGetter)
 	AUnit* GetUnitRef() const { return UnitRef; }
-	
-	UFUNCTION(BlueprintGetter)
-	bool CanRotate() const { return bCanRotate; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetState(EUnitViewState NewState);
+
+	UFUNCTION(BlueprintCallable)
+	void StartAssembling();
 	
 	virtual bool IsPreviewState() const override;
 
@@ -61,17 +61,10 @@ public:
 	
 // Methods
 public:
-	UFUNCTION(BlueprintCallable)
-	void PrePlayerMoveTick();
-	
-	UFUNCTION(BlueprintCallable)
-	void PostPlayerMoveTick();
 	
 protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(BlueprintImplementableEvent)
-	void PrePlayerMoveTickBP();
-	
-	UFUNCTION(BlueprintImplementableEvent)
-	void PostPlayerMoveTickBP();
-	
+	void OnRep_UnitRef();
 };

@@ -1,7 +1,11 @@
 #include "Field/Unit/Unit.h"
+#include <Net/UnrealNetwork.h>
+#include "Field/Anchor/CellParamsMapGenerator.h"
 #include "Field/Utils/UnitPlacementReturnState.h"
 #include "Field/Utils/UnitUpgradeReturnState.h"
 #include "Player/GamePlayerController.h"
+#include "Utils/TwoDimArray/CellParamsTwoDimArray.h"
+
 
 void AUnit::Init(AFieldController* Field, AGamePlayerController* PlayerControllerOwner)
 {
@@ -9,27 +13,54 @@ void AUnit::Init(AFieldController* Field, AGamePlayerController* PlayerControlle
 	AGameActor::Init(Field);
 }
 
-// ------------------ Cells Map ------------------
-
-int AUnit::GetImproveLevelFromLocation(const FHexagonLocation HexagonLocation) const
+void AUnit::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	/*if (CellParamsMap)
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	// General properties
+	DOREPLIFETIME( AUnit, UnitName );
+	DOREPLIFETIME( AUnit, UnitType );
+	DOREPLIFETIME( AUnit, Level );
+	DOREPLIFETIME( AUnit, UnitViewClass );
+	DOREPLIFETIME( AUnit, InitProperties );
+	DOREPLIFETIME( AUnit, AnchorPoints );
+	DOREPLIFETIME( AUnit, TerrainRules );
+	DOREPLIFETIME( AUnit, NecessaryCellSpace );
+	DOREPLIFETIME( AUnit, InitMaxHitPoints );
+	DOREPLIFETIME( AUnit, InitMaxDefence );
+	DOREPLIFETIME( AUnit, InitMovement );
+	DOREPLIFETIME( AUnit, MovesToAssemble );
+	DOREPLIFETIME( AUnit, UnitIconMedium );
+	DOREPLIFETIME( AUnit, UnitDescription );
+	DOREPLIFETIME( AUnit, LocationRequirementsToSpawnInfo );
+	DOREPLIFETIME( AUnit, MainRequirementsToSpawnInfo );
+	// State properties
+	DOREPLIFETIME( AUnit, PlayerControllerRef );
+	DOREPLIFETIME( AUnit, PrefabPreview );
+	DOREPLIFETIME( AUnit, UnitViews );
+	DOREPLIFETIME( AUnit, CellParamsMap );
+}
+
+// ------------------ Place ------------------
+
+void AUnit::StartPreview()
+{
+	PrefabPreview = InitUnitView(FHexagonLocation());
+	PrefabPreview->SetState(EUnitViewState::Preview);
+	PrefabPreview->SetActorHiddenInGame(true);
+	CellParamsMap = UCellParamsMapGenerator::FromUnit(this);
+	PlayerControllerRef->CellParamsMap = CellParamsMap;
+}
+
+void AUnit::StopPreview()
+{
+	if (PrefabPreview)
 	{
-		return CellParamsMap->GetCell(HexagonLocation).ImproveLevel;
-	}*/
-	return 0;
+		PrefabPreview->Destroy();
+		PrefabPreview = nullptr;
+	}
+	CellParamsMap = nullptr;
+	PlayerControllerRef->CellParamsMap = nullptr;
 }
-
-
-
-
-bool AUnit::CanBuildOnLocation(FHexagonLocation HexagonLocation)
-{
-	int improveLevel = GetImproveLevelFromLocation(HexagonLocation);
-	return improveLevel >= -1;
-}
-
-
 
 EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation HexagonLocation)
 {
@@ -38,7 +69,11 @@ EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation Hexag
 	{
 		return EUnitPlacementReturnState::NotPlayerMove;
 	}
-	if (!CanBuildOnLocation(HexagonLocation))
+	if (!CanPlace())
+	{
+		return EUnitPlacementReturnState::RequirementsNotMatch;
+	}
+	if (!CanPlaceOnLocation(HexagonLocation))
 	{
 		return EUnitPlacementReturnState::LocationRequirementsNotMatch;
 	}
@@ -50,14 +85,45 @@ EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation Hexag
 	return EUnitPlacementReturnState::Succeeded;
 }
 
-void AUnit::StopPreview()
-{
-}
-
 EUnitUpgradeReturnState AUnit::TryToPlace()
 {
-	return EUnitUpgradeReturnState::RequirementsNotMatch;
+	if (PlayerControllerRef->CheckIfPlayerMove() == false)
+	{
+		return EUnitUpgradeReturnState::NotPlayerMove;
+	}
+	if (PlayerControllerRef->CanUseMove() == false)
+	{
+		return EUnitUpgradeReturnState::NotEnoughMoves;
+	}
+	if (!CanPlace())
+	{
+		return EUnitUpgradeReturnState::RequirementsNotMatch;
+	}
+	PlacePrefabView();
+	PlayerControllerRef->TryToUseMove();
+	return EUnitUpgradeReturnState::Succeeded;
 }
 
+bool AUnit::CanPlaceOnLocation(const FHexagonLocation HexagonLocation) const
+{
+	if (CellParamsMap)
+	{
+		return CellParamsMap->GetCell(HexagonLocation).ParametersType == ECellParametersType::Free;
+	}
+	UE_LOG(LogTemp, Error, TEXT("ABuilding::CanBuildOnLocation: CellParamsMap is nullptr"));
+	return false;
+}
 
-// ----------------- Preview -----------------
+AUnitView* AUnit::InitUnitView(FHexagonLocation HexagonLocation)
+{
+	AUnitView* View = GetWorld()->SpawnActor<AUnitView>(UnitViewClass);
+	View->Init(FieldController, this, HexagonLocation);
+	return View;
+}
+
+void AUnit::PlacePrefabView()
+{
+	UnitViews.Add(PrefabPreview);
+	PrefabPreview->StartAssembling();
+	PrefabPreview = nullptr;
+}

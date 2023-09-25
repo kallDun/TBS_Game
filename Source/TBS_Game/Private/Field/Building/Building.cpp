@@ -1,5 +1,4 @@
 #include "Field/Building/Building.h"
-
 #include <Engine/ActorChannel.h>
 #include <Net/UnrealNetwork.h>
 #include "Field/Anchor/CellParamsMapGenerator.h"
@@ -33,6 +32,7 @@ void ABuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME( ABuilding, AffectingOnOtherBuildingImproveLevel );
 	DOREPLIFETIME( ABuilding, AnchorPoints );
 	DOREPLIFETIME( ABuilding, TerrainRules );
+	DOREPLIFETIME( ABuilding, NecessaryCellSpace );
 	DOREPLIFETIME( ABuilding, InitMaxHitPoints );
 	DOREPLIFETIME( ABuilding, InitMaxCellCount );
 	DOREPLIFETIME( ABuilding, MovesToBuild );

@@ -22,6 +22,9 @@ class TBS_GAME_API UCellParamsMapGenerator : public UObject
 public:
 	UFUNCTION(BlueprintCallable)
 	static UCellParamsTwoDimArray* FromBuilding(const ABuilding* Building);
+	
+	UFUNCTION(BlueprintCallable)
+	static UCellParamsTwoDimArray* FromUnit(const AUnit* Unit);
 
 private:
 	UFUNCTION(BlueprintCallable)
