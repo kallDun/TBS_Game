@@ -69,7 +69,7 @@ public:
 		}));
 	}
 
-	__override virtual bool IsSupportedForNetworking() const override
+	virtual  bool IsSupportedForNetworking() const override
 	{
 		return true;
 	}
