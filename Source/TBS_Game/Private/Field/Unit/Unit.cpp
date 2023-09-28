@@ -7,37 +7,20 @@
 #include "Utils/TwoDimArray/CellParamsTwoDimArray.h"
 
 
-void AUnit::Init(AFieldController* Field, AGamePlayerController* PlayerControllerOwner)
-{
-	PlayerControllerRef = PlayerControllerOwner;
-	AGameActor::Init(Field);
-}
-
 void AUnit::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	// General properties
-	DOREPLIFETIME( AUnit, UnitName );
 	DOREPLIFETIME( AUnit, UnitType );
 	DOREPLIFETIME( AUnit, Level );
 	DOREPLIFETIME( AUnit, UnitViewClass );
-	DOREPLIFETIME( AUnit, InitProperties );
-	DOREPLIFETIME( AUnit, AnchorPoints );
-	DOREPLIFETIME( AUnit, TerrainRules );
-	DOREPLIFETIME( AUnit, NecessaryCellSpace );
 	DOREPLIFETIME( AUnit, InitMaxHitPoints );
 	DOREPLIFETIME( AUnit, InitMaxDefence );
 	DOREPLIFETIME( AUnit, InitMovement );
 	DOREPLIFETIME( AUnit, MovesToAssemble );
-	DOREPLIFETIME( AUnit, UnitIconMedium );
-	DOREPLIFETIME( AUnit, UnitDescription );
-	DOREPLIFETIME( AUnit, LocationRequirementsToSpawnInfo );
-	DOREPLIFETIME( AUnit, MainRequirementsToSpawnInfo );
 	// State properties
-	DOREPLIFETIME( AUnit, PlayerControllerRef );
 	DOREPLIFETIME( AUnit, PrefabPreview );
 	DOREPLIFETIME( AUnit, UnitViews );
-	DOREPLIFETIME( AUnit, CellParamsMap );
 }
 
 // ------------------ Place ------------------
@@ -47,7 +30,7 @@ void AUnit::StartPreview()
 	PrefabPreview = InitUnitView(FHexagonLocation());
 	PrefabPreview->SetState(EUnitViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
-	CellParamsMap = UCellParamsMapGenerator::FromUnit(this);
+	CellParamsMap = UCellParamsMapGenerator::New(this);
 	PlayerControllerRef->CellParamsMap = CellParamsMap;
 }
 

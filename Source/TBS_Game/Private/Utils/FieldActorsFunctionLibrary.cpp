@@ -46,7 +46,7 @@ TArray<ABuildingView*> UFieldActorsFunctionLibrary::GetBuildingViewsByBuildingNa
 	{
 		if (ABuildingView* BuildingView = Cast<ABuildingView>(BuildingViewsActor))
 		{
-			if (BuildingView->GetBuildingRef()->BuildingName == BuildingName)
+			if (BuildingView->GetBuildingRef()->Name == BuildingName)
 			{
 				if (bIncludePreviewActors || !BuildingView->IsPreviewState())
 				{

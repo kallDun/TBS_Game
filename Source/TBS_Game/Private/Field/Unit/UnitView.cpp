@@ -49,5 +49,6 @@ void AUnitView::SetState(const EUnitViewState NewState)
 
 void AUnitView::StartAssembling()
 {
+	State = EUnitViewState::Assembling;
 }
 
