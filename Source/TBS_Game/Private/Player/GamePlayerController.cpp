@@ -6,6 +6,7 @@
 #include "Field/Controller/FieldController.h"
 #include "Field/Unit/Unit.h"
 #include "Field/Utils/BuildUpgradeReturnState.h"
+#include "Field/Utils/UnitPlacementReturnState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Utils/HexagonFunctionLibrary.h"
@@ -333,6 +334,15 @@ EBuildUpgradeReturnState AGamePlayerController::ConstructBuilding(ABuilding* Bui
 		return ReturnState;
 	}
 	return EBuildUpgradeReturnState::Unknown;
+}
+
+EUnitPlacementReturnState AGamePlayerController::PlaceUnit(AUnit* Unit)
+{
+	if (Units.Contains(Unit))
+	{
+		return Unit->TryToPlace();
+	}
+	return EUnitPlacementReturnState::Unknown;
 }
 
 

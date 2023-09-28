@@ -13,6 +13,7 @@ class AUnit;
 class AHero;
 class ABuilding;
 enum class EBuildUpgradeReturnState : uint8;
+enum class EUnitPlacementReturnState : uint8;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerEvent);
 
@@ -199,6 +200,9 @@ protected:
 	// Actions
 	UFUNCTION(BlueprintCallable)
 	EBuildUpgradeReturnState ConstructBuilding(ABuilding* Building);
+
+	UFUNCTION(BlueprintCallable)
+	EUnitPlacementReturnState PlaceUnit(AUnit* Unit);
 
 // Auxiliary
 protected:

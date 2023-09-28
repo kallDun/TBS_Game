@@ -14,7 +14,7 @@ class AGamePlayerController;
 enum class EUnitPillarType : uint8;
 enum class EUnitAttackType : uint8;
 enum class EUnitPlacementReturnState : uint8;
-enum class EUnitUpgradeReturnState : uint8;
+enum class EUnitPlaceReturnState : uint8;
 
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = (Unit))
 class TBS_GAME_API AUnit : public AFieldActorsHandler
@@ -49,9 +49,12 @@ public:
 	// current state
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	AUnitView* PrefabPreview;
-
+	
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	TArray<AUnitView*> UnitViews = {};
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
+	int AvailableUnitsCount = 0;
 
 // Methods
 public:
@@ -65,7 +68,10 @@ public:
 	void StopPreview();
 
 	UFUNCTION(BlueprintCallable)
-	EUnitUpgradeReturnState TryToPlace();
+	EUnitPlacementReturnState CheckUnitPlacement();
+
+	UFUNCTION(BlueprintCallable)
+	EUnitPlacementReturnState TryToPlace();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	bool CanPlace();

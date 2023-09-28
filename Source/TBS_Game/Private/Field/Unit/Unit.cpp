@@ -2,7 +2,6 @@
 #include <Net/UnrealNetwork.h>
 #include "Field/Anchor/CellParamsMapGenerator.h"
 #include "Field/Utils/UnitPlacementReturnState.h"
-#include "Field/Utils/UnitUpgradeReturnState.h"
 #include "Player/GamePlayerController.h"
 #include "Utils/TwoDimArray/CellParamsTwoDimArray.h"
 
@@ -45,46 +44,55 @@ void AUnit::StopPreview()
 	PlayerControllerRef->CellParamsMap = nullptr;
 }
 
-EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation HexagonLocation)
+EUnitPlacementReturnState AUnit::CheckUnitPlacement()
 {
-	PrefabPreview->SetActorHiddenInGame(true);
 	if (PlayerControllerRef->CheckIfPlayerMove() == false)
 	{
 		return EUnitPlacementReturnState::NotPlayerMove;
+	}
+	if (PlayerControllerRef->CanUseMove() == false)
+	{
+		return EUnitPlacementReturnState::NotEnoughMoves;
+	}
+	if (AvailableUnitsCount <= 0)
+	{
+		return EUnitPlacementReturnState::ReachedLimit;
 	}
 	if (!CanPlace())
 	{
 		return EUnitPlacementReturnState::RequirementsNotMatch;
 	}
+	return EUnitPlacementReturnState::Succeeded;
+}
+
+EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation HexagonLocation)
+{
+	if (!PrefabPreview)
+	{
+		return EUnitPlacementReturnState::Unknown;
+	}
+	PrefabPreview->SetActorHiddenInGame(true);
+
+	const auto ReturnState = CheckUnitPlacement();
+	if (ReturnState != EUnitPlacementReturnState::Succeeded) return ReturnState;
+	
 	if (!CanPlaceOnLocation(HexagonLocation))
 	{
 		return EUnitPlacementReturnState::LocationRequirementsNotMatch;
 	}
-	if (PrefabPreview)
-	{
-		PrefabPreview->SetAndUpdateLocation(HexagonLocation);
-		PrefabPreview->SetActorHiddenInGame(false);
-	}
+	PrefabPreview->SetAndUpdateLocation(HexagonLocation);
+	PrefabPreview->SetActorHiddenInGame(false);
 	return EUnitPlacementReturnState::Succeeded;
 }
 
-EUnitUpgradeReturnState AUnit::TryToPlace()
+EUnitPlacementReturnState AUnit::TryToPlace()
 {
-	if (PlayerControllerRef->CheckIfPlayerMove() == false)
-	{
-		return EUnitUpgradeReturnState::NotPlayerMove;
-	}
-	if (PlayerControllerRef->CanUseMove() == false)
-	{
-		return EUnitUpgradeReturnState::NotEnoughMoves;
-	}
-	if (!CanPlace())
-	{
-		return EUnitUpgradeReturnState::RequirementsNotMatch;
-	}
+	const auto ReturnState = CheckUnitPlacement();
+	if (ReturnState != EUnitPlacementReturnState::Succeeded) return ReturnState;
+	
 	PlacePrefabView();
 	PlayerControllerRef->TryToUseMove();
-	return EUnitUpgradeReturnState::Succeeded;
+	return EUnitPlacementReturnState::Succeeded;
 }
 
 bool AUnit::CanPlaceOnLocation(const FHexagonLocation HexagonLocation) const
