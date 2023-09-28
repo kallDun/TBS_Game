@@ -91,6 +91,7 @@ EUnitPlacementReturnState AUnit::TryToPlace()
 	if (ReturnState != EUnitPlacementReturnState::Succeeded) return ReturnState;
 	
 	PlacePrefabView();
+	AvailableUnitsCount--;
 	PlayerControllerRef->TryToUseMove();
 	return EUnitPlacementReturnState::Succeeded;
 }
