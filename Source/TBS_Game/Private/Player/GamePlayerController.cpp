@@ -4,7 +4,9 @@
 #include "Field/FieldActor.h"
 #include "Field/Building/Building.h"
 #include "Field/Controller/FieldController.h"
-#include "Field/ReturnState/BuildUpgradeReturnState.h"
+#include "Field/Unit/Unit.h"
+#include "Field/Utils/BuildUpgradeReturnState.h"
+#include "Field/Utils/UnitPlacementReturnState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Utils/HexagonFunctionLibrary.h"
@@ -49,6 +51,7 @@ void AGamePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME( AGamePlayerController, MovesLeft );
 	DOREPLIFETIME( AGamePlayerController, BuildingPrefabs );
 	DOREPLIFETIME( AGamePlayerController, Buildings );
+	DOREPLIFETIME( AGamePlayerController, Units );
 	DOREPLIFETIME( AGamePlayerController, CellParamsMap );
 }
 
@@ -67,6 +70,7 @@ void AGamePlayerController::InitState_Implementation(const int PlayerNum, const 
 	PlayerNumber = PlayerNum;
 	CenterLocation = CenterHexLocation;
 	InitBuildingPrefabs();
+	InitUnitPrefabs();
 	FieldController->AddPlayerToList(this);
 	PlayerInitializeFinishedBroadcast();
 }
@@ -104,6 +108,23 @@ ABuilding* AGamePlayerController::InitBuildingPrefab(const TSubclassOf<ABuilding
 	return BuildingPrefab;
 }
 
+void AGamePlayerController::InitUnitPrefabs()
+{
+	TArray<TSubclassOf<AUnit>> UnitPrefabsClasses = FieldController->GetUnitClasses();
+	for (const TSubclassOf<AUnit> UnitClass : UnitPrefabsClasses)
+	{
+		Units.Add(InitUnitPrefab(UnitClass));
+	}
+}
+
+AUnit* AGamePlayerController::InitUnitPrefab(const TSubclassOf<AUnit> UnitClass)
+{
+	AUnit* UnitPrefab = GetWorld()->SpawnActor<AUnit>(UnitClass);
+	UnitPrefab->Init(FieldController, this);
+	UnitPrefab->Owner = this;
+	return UnitPrefab;
+}
+
 // ----------------------------------- Events ----------------------------------
 
 void AGamePlayerController::PlayerInitializeFinishedBroadcast_Implementation()
@@ -133,8 +154,7 @@ void AGamePlayerController::StartTurn()
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d TURN STARTED"), PlayerNumber));
 
 	MovesLeft = FieldController->GetMovesPerTurn();
-	//StartUnitsMove();
-	StartBuildingsAssembling();
+	StartUnitsMove();
 }
 
 void AGamePlayerController::EndTurn()
@@ -177,22 +197,50 @@ void AGamePlayerController::Tick(float DeltaSeconds)
 
 void AGamePlayerController::StartUnitsMove()
 {
-	// TODO: implement with Units
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start UNITS MOVE"), PlayerNumber));
+	
+	SetPlayerTurnType(EPlayerTurnType::UnitsMove);
+	if (Units.Num() > 0)
+	{
+		StartUnitMove(Units[0]);
+	}
+	else EndUnitMove(nullptr);
 }
 
 void AGamePlayerController::StartUnitMove(AUnit* Unit)
 {
-	// TODO: implement with Units
+	Unit->StartMoveTick();
 }
 
 void AGamePlayerController::EndUnitMove(AUnit* Unit)
 {
-	// TODO: implement with Units
+	if (Unit)
+	{
+		const int Index = Units.IndexOfByKey(Unit);
+		if (Index < Units.Num() - 1)
+		{
+			StartUnitMove(Units[Index + 1]);
+		}
+		else DoUnitsAssembling();
+	}
+	else DoUnitsAssembling();
 }
 
-void AGamePlayerController::StartBuildingsAssembling()
+void AGamePlayerController::DoUnitsAssembling()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start buildings ASSEMBLING"), PlayerNumber));
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d do UNITS ASSEMBLING"), PlayerNumber));
+	
+	SetPlayerTurnType(EPlayerTurnType::UnitsAssembling);
+	for (AUnit* Unit : Units)
+	{
+		Unit->AssembleMoveTick();
+	}
+	DoBuildingsAssembling();
+}
+
+void AGamePlayerController::DoBuildingsAssembling()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d do BUILDINGS ASSEMBLING"), PlayerNumber));
 	
 	SetPlayerTurnType(EPlayerTurnType::BuildingsAssembling);
 	for (ABuilding* Building : Buildings)
@@ -204,7 +252,7 @@ void AGamePlayerController::StartBuildingsAssembling()
 
 void AGamePlayerController::StartBuildingsPreMove()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start buildings PRE MOVE"), PlayerNumber));
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start BUILDINGS PRE MOVE"), PlayerNumber));
 	
 	SetPlayerTurnType(EPlayerTurnType::BuildingsPreMove);
 	if (Buildings.Num() > 0)
@@ -241,7 +289,7 @@ void AGamePlayerController::StartPlayerMove()
 
 void AGamePlayerController::StartBuildingsPostMove()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start buildings POST MOVE"), PlayerNumber));
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, FString::Printf(TEXT("Player %d start BUILDINGS POST MOVE"), PlayerNumber));
 	
 	SetPlayerTurnType(EPlayerTurnType::BuildingsPostMove);
 	if (Buildings.Num() > 0)
@@ -286,6 +334,15 @@ EBuildUpgradeReturnState AGamePlayerController::ConstructBuilding(ABuilding* Bui
 		return ReturnState;
 	}
 	return EBuildUpgradeReturnState::Unknown;
+}
+
+EUnitPlacementReturnState AGamePlayerController::PlaceUnit(AUnit* Unit)
+{
+	if (Units.Contains(Unit))
+	{
+		return Unit->TryToPlace();
+	}
+	return EUnitPlacementReturnState::Unknown;
 }
 
 

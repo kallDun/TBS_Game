@@ -21,21 +21,24 @@ class TBS_GAME_API UCellParamsMapGenerator : public UObject
 
 public:
 	UFUNCTION(BlueprintCallable)
-	static UCellParamsTwoDimArray* FromBuilding(const ABuilding* Building);
+	static UCellParamsTwoDimArray* New(const AFieldActorsHandler* Actor);
 
 private:
 	UFUNCTION(BlueprintCallable)
-	static UCellParamsTwoDimArray* InitFromBuildingAnchor(const ABuilding* Building, const FAnchorPoint& Anchor);
+	static UCellParamsTwoDimArray* InitFromAnchor(const AFieldActorsHandler* Actor, const FAnchorPoint& Anchor);
 	
 	UFUNCTION(BlueprintCallable)
 	static UCellParamsTwoDimArray* AddArrays(UCellParamsTwoDimArray* MapA, UCellParamsTwoDimArray* MapB);
 
 	UFUNCTION(BlueprintCallable)
-	static UCellParamsTwoDimArray* GetCellsMapForSingleAnchor(const ABuilding* Building, const FSingleAnchorData& SingleAnchor);
+	static UCellParamsTwoDimArray* GetBuildingRelatedCellsMapForSingleAnchor(const ABuilding* Building, const FSingleAnchorData& SingleAnchor);
+	
+	UFUNCTION(BlueprintCallable)
+	static UCellParamsTwoDimArray* GetUnitRelatedCellsMapForSingleAnchor(const AUnit* Unit, const FSingleAnchorData& SingleAnchor);
 
 	UFUNCTION(BlueprintCallable)	
 	static bool CheckTerrainRules(const ACell* Cell, const FTerrainRules& TerrainRules);
 	
 	UFUNCTION(BlueprintCallable)
-	static int CalculateImprovementLevel(const ACell* Cell, const ABuilding* Building, FSingleAnchorData SingleAnchor, const int Distance);
+	static int CalculateImprovementLevel(const ACell* Cell, const AFieldActorsHandler* Actor, const FSingleAnchorData SingleAnchor, const int Distance);
 };

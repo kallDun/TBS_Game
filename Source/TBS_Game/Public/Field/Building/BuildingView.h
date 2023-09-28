@@ -23,7 +23,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void OnInit();
 	
-	// Current state properties
+// Current state properties
 protected:	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	bool bCanRotate = true;

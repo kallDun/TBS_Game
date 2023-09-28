@@ -9,6 +9,7 @@ Content/Assets/*
 Content/ThirdParty/*
 Content/MSPresets/*
 Plugins/*
+TBS_Game.sln.DotSettings.user
 
 # Compiled Object files
 *.slo

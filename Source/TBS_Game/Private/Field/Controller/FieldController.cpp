@@ -1,11 +1,11 @@
 #include "Field/Controller//FieldController.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
 #include <Net/UnrealNetwork.h>
 #include "Field/Cell/Cell.h"
 #include "Field/Cell/CellClassToTerrain.h"
 #include "Field/Controller/FieldControllerState.h"
 #include "Utils/TwoDimArray/CellTwoDimArray.h"
 #include "Engine/ActorChannel.h"
+#include "Player/GamePlayerController.h"
 
 
 // --------------------------------- Init methods ----------------------------------

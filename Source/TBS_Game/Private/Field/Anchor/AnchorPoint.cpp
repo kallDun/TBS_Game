@@ -5,7 +5,7 @@
 #include "Utils/FieldActorsFunctionLibrary.h"
 
 
-TArray<FSingleAnchorData> FAnchorPoint::GetAnchors(const ABuilding* Building, const int DefaultRadius) const
+TArray<FSingleAnchorData> FAnchorPoint::GetAnchors(const AFieldActorsHandler* Actor, const int DefaultRadius) const
 {
 	TArray<FSingleAnchorData> Anchors = {};
 	if (PointType == EAnchorPointType::Fixed ||
@@ -18,19 +18,20 @@ TArray<FSingleAnchorData> FAnchorPoint::GetAnchors(const ABuilding* Building, co
 		}
 		else if (RadiusType == EAnchorRadiusType::CurrentBuildingProperty)
 		{
-			const float RadiusFloat = Building->GetPropertyValue(RadiusBuildingPropertyName, DefaultRadius);
+			const float RadiusFloat = Actor->GetPropertyValue(RadiusBuildingPropertyName, DefaultRadius);
 			Radius = FMath::RoundToInt(RadiusFloat);
 		}
 		const FHexagonLocation Location = PointType == EAnchorPointType::Fixed
-			? FixedLocation : Building->PlayerControllerRef->CenterLocation;
+			? FixedLocation : Actor->PlayerControllerRef->CenterLocation;
 		Anchors.Add(FSingleAnchorData(Location, Radius, MaximumDebuffLevelToBuild));
 	}
 	else if (PointType == EAnchorPointType::BehaviourComponent
 		|| PointType == EAnchorPointType::BuildingName)
 	{
 		TArray<ABuildingView*> BuildingViews = PointType == EAnchorPointType::BehaviourComponent
-			? UFieldActorsFunctionLibrary::GetBuildingViewsByBehaviourComponent(Building, BuildingBehaviourClass, false, false, Building)
-			: UFieldActorsFunctionLibrary::GetBuildingViewsByBuildingName(Building, BuildingName, false, false);
+			? UFieldActorsFunctionLibrary::GetBuildingViewsByBehaviourComponent(Actor, BuildingBehaviourClass,
+				false, false, Cast<ABuilding>(Actor))
+			: UFieldActorsFunctionLibrary::GetBuildingViewsByBuildingName(Actor, BuildingName, false, false);
 		
 		for (const ABuildingView* BuildingView : BuildingViews)
 		{
@@ -41,7 +42,7 @@ TArray<FSingleAnchorData> FAnchorPoint::GetAnchors(const ABuilding* Building, co
 			}
 			else if (RadiusType == EAnchorRadiusType::CurrentBuildingProperty)
 			{
-				Radius = FMath::RoundToInt(Building->GetPropertyValue(RadiusBuildingPropertyName, DefaultRadius));
+				Radius = FMath::RoundToInt(Actor->GetPropertyValue(RadiusBuildingPropertyName, DefaultRadius));
 			}
 			else if (RadiusType == EAnchorRadiusType::AnchorBuildingProperty)
 			{

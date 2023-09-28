@@ -1,53 +1,36 @@
 #include "Field/Building/Building.h"
-
-#include <Engine/ActorChannel.h>
 #include <Net/UnrealNetwork.h>
 #include "Field/Anchor/CellParamsMapGenerator.h"
 #include "Field/Building/BuildingView.h"
 #include "Field/Building/UpgradeBuildingComponent.h"
-#include "Field/Controller/FieldController.h"
-#include "Field/ReturnState/BuildingPlacementReturnState.h"
-#include "Field/ReturnState/BuildUpgradeReturnState.h"
+#include "Field/Utils/BuildingPlacementReturnState.h"
+#include "Field/Utils/BuildUpgradeReturnState.h"
 #include "Player/GamePlayerController.h"
 #include "Field/FieldActor.h"
+#include "Field/Anchor/CellParameters.h"
 #include "Field/Anchor/CellParametersType.h"
 #include "Utils/TwoDimArray/CellParamsTwoDimArray.h"
 
 
-void ABuilding::Init(AFieldController* Field, AGamePlayerController* PlayerControllerOwner)
-{
-	PlayerControllerRef = PlayerControllerOwner;
-	AGameActor::Init(Field);
-}
-
 void ABuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	// General properties
+	// Main properties
 	DOREPLIFETIME( ABuilding, UpgradeBuildingComponents );
-	DOREPLIFETIME( ABuilding, BuildingName );
 	DOREPLIFETIME( ABuilding, BuildingType );
 	DOREPLIFETIME( ABuilding, BuildingViewClass );
-	DOREPLIFETIME( ABuilding, BuildingMeshRef );
-	DOREPLIFETIME( ABuilding, InitProperties );
 	DOREPLIFETIME( ABuilding, bCanBuildWithOtherBuildings );
 	DOREPLIFETIME( ABuilding, AffectingOnOtherBuildingImproveLevel );
-	DOREPLIFETIME( ABuilding, AnchorPoints );
-	DOREPLIFETIME( ABuilding, TerrainRules );
 	DOREPLIFETIME( ABuilding, InitMaxHitPoints );
 	DOREPLIFETIME( ABuilding, InitMaxCellCount );
 	DOREPLIFETIME( ABuilding, MovesToBuild );
 	DOREPLIFETIME( ABuilding, MovesToAssemble );
-	DOREPLIFETIME( ABuilding, BuildingIconMedium );
-	DOREPLIFETIME( ABuilding, BuildingDescription );
+	// Info properties
 	DOREPLIFETIME( ABuilding, BuildActionInfo );
 	DOREPLIFETIME( ABuilding, ImproveLevelFromLocationInfo );
 	DOREPLIFETIME( ABuilding, PropertyChangedFromImproveLevelInfo );
-	DOREPLIFETIME( ABuilding, LocationRequirementsToBuildInfo );
-	DOREPLIFETIME( ABuilding, MainRequirementsToBuildInfo );
 	DOREPLIFETIME( ABuilding, RequirementsToExpendCells );
 	// State properties
-	DOREPLIFETIME( ABuilding, PlayerControllerRef );
 	DOREPLIFETIME( ABuilding, BuildingState );
 	DOREPLIFETIME( ABuilding, CurrentLevel );
 	DOREPLIFETIME( ABuilding, MovesToBuildLeft );
@@ -55,15 +38,7 @@ void ABuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME( ABuilding, BuildingViews );
 	DOREPLIFETIME( ABuilding, PrefabViews );
 	DOREPLIFETIME( ABuilding, PrefabPreview );
-	DOREPLIFETIME( ABuilding, CellParamsMap );
 	DOREPLIFETIME( ABuilding, InitBuildingLocation );
-}
-
-bool ABuilding::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-	bWroteSomething |= Channel->ReplicateSubobject(CellParamsMap, *Bunch, *RepFlags);
-	return bWroteSomething;
 }
 
 void ABuilding::InitUpgradeBuildingComponents(TArray<UUpgradeBuildingComponent*> Components)
@@ -82,7 +57,7 @@ void ABuilding::StartPreview()
 	PrefabPreview = InitBuildingView(FHexagonLocation(), false);
 	PrefabPreview->SetState(EBuildingViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
-	CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+	CellParamsMap = UCellParamsMapGenerator::New(this);
 	PlayerControllerRef->CellParamsMap = CellParamsMap;
 }
 
@@ -155,7 +130,7 @@ EBuildingPlacementReturnState ABuilding::TryToExpendLocation(const FHexagonLocat
 	{
 		InitBuildingLocation = HexagonLocation;
 		PrefabViews.Add(InitBuildingView(HexagonLocation, true));
-		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::New(this);
 		PlayerControllerRef->CellParamsMap = CellParamsMap;
 		return EBuildingPlacementReturnState::Succeeded;
 	}
@@ -166,7 +141,7 @@ EBuildingPlacementReturnState ABuilding::TryToExpendLocation(const FHexagonLocat
 			return EBuildingPlacementReturnState::CannotExpandArea;
 		}
 		PrefabViews.Add(InitBuildingView(HexagonLocation, false));
-		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::New(this);
 		PlayerControllerRef->CellParamsMap = CellParamsMap;
 		return EBuildingPlacementReturnState::Succeeded;
 	}
@@ -193,7 +168,7 @@ bool ABuilding::DeleteExpendedLocation(const FHexagonLocation HexagonLocation)
 		{
 			PrefabViews[0]->SetMainBuildingView(true);
 		}
-		CellParamsMap = UCellParamsMapGenerator::FromBuilding(this);
+		CellParamsMap = UCellParamsMapGenerator::New(this);
 		PlayerControllerRef->CellParamsMap = CellParamsMap;
 	}
 	return false;
@@ -495,17 +470,17 @@ void ABuilding::AssembleMoveTick()
 
 // ------------------ Getters ------------------
 
-TArray<FBuildingProperty> ABuilding::GetProperties(const bool UseCurrentLevel, const int CustomLevel) const
+TArray<FValueProperty> ABuilding::GetPropertiesByLevel(const bool UseCurrentLevel, const int CustomLevel) const
 {
 	TMap<FString, float> Map = {};
-	for (FBuildingProperty Property : InitProperties)
+	for (FValueProperty Property : InitProperties)
 	{
 		Map.Add(Property.Name.ToString(), Property.Value);
 	}
 	
 	for (UUpgradeBuildingComponent* Upgrade : GetUpgradeComponentsWithLevel(UseCurrentLevel ? CurrentLevel : CustomLevel, UseCurrentLevel))
 	{
-		for (FBuildingProperty Property : Upgrade->Properties)
+		for (FValueProperty Property : Upgrade->Properties)
 		{
 			if (Map.Contains(Property.Name.ToString()))
 			{
@@ -518,12 +493,17 @@ TArray<FBuildingProperty> ABuilding::GetProperties(const bool UseCurrentLevel, c
 		}
 	}
 
-	TArray<FBuildingProperty> Result = {};
+	TArray<FValueProperty> Result = {};
 	for (auto& Elem : Map)
 	{
-		Result.Add(FBuildingProperty(FName(Elem.Key), Elem.Value));
+		Result.Add(FValueProperty(FName(Elem.Key), Elem.Value));
 	}
 	return Result;
+}
+
+TArray<FValueProperty> ABuilding::GetCurrentProperties() const
+{
+	return GetPropertiesByLevel();
 }
 
 float ABuilding::GetMaxHitPoints(const bool UseCurrentLevel, const int CustomLevel) const
@@ -544,32 +524,6 @@ int ABuilding::GetMaxCellCount(const bool UseCurrentLevel, const int CustomLevel
 		MaxCellCount += Upgrade->MaxCellCountAddition;
 	}
 	return MaxCellCount;
-}
-
-float ABuilding::GetPropertyValue(const FName PropertyName, const float ValueByDefault) const
-{
-	TArray<FBuildingProperty> Properties = GetProperties(true);
-	for (auto Property : Properties)
-	{
-		if (Property.Name == PropertyName)
-		{
-			return Property.Value;
-		}
-	}
-	return ValueByDefault;
-}
-
-bool ABuilding::SetPropertyValue(const FName PropertyName, const float Value) const
-{
-	for (auto Property : InitProperties)
-	{
-		if (Property.Name == PropertyName)
-		{
-			Property.SetValue(Value);
-			return true;
-		}
-	}
-	return false;
 }
 
 TArray<UUpgradeBuildingComponent*> ABuilding::GetUpgradeComponentsWithLevel(const int Level, const bool OnlyReadyComponents) const

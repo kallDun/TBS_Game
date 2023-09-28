@@ -5,6 +5,7 @@
 #include "SingleAnchorData.h"
 #include "AnchorPoint.generated.h"
 
+class AFieldActorsHandler;
 class ABuilding;
 class UBuildingBehaviourComponent;
 
@@ -41,5 +42,5 @@ public:
 	int MaximumDebuffLevelToBuild = -10;
 	
 // functions
-	TArray<FSingleAnchorData> GetAnchors(const ABuilding* Building, const int DefaultRadius) const;
+	TArray<FSingleAnchorData> GetAnchors(const AFieldActorsHandler* Actor, const int DefaultRadius) const;
 };

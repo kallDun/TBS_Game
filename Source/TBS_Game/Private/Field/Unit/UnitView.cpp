@@ -1,8 +1,6 @@
-
-
 #include "Field/Unit/UnitView.h"
+#include <Net/UnrealNetwork.h>
 #include "Field/Controller/FieldController.h"
-#include "Field/Event/TurnsOrderEventSystem.h"
 #include "Field/Unit/Unit.h"
 
 
@@ -17,47 +15,64 @@ void AUnitView::Init(AFieldController* Field, AUnit* UnitReference, const FHexag
 	OnInit();
 }
 
-
-// -------------------------------------  Player pre/post move  -------------------------------------------
-
-void AUnitView::PrePlayerMoveTick()
+void AUnitView::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	//GetEventSystem()->UnitViewPreMoveStarted.Broadcast(this);
-	PrePlayerMoveTickBP();
-	if (bAutomaticallyEndPrePlayerMove)
-	{
-		//GetEventSystem()->UnitViewPreMoveEnded.Broadcast(this);
-	}
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME( AUnitView, UnitRef );
+	DOREPLIFETIME( AUnitView, CurrentHitPoints );
+	DOREPLIFETIME( AUnitView, CurrentDefence );
+	DOREPLIFETIME( AUnitView, State );
+	DOREPLIFETIME( AUnitView, MovesToAssembleLeft );
 }
-
-void AUnitView::PostPlayerMoveTick()
-{
-	//GetEventSystem()->UnitViewPostMoveStarted.Broadcast(this);
-	PostPlayerMoveTickBP();
-	if (bAutomaticallyEndPostPlayerMove)
-	{
-		//GetEventSystem()->UnitViewPostMoveEnded.Broadcast(this);
-	}
-}
-
 
 // -------------------------------------  Getters  --------------------------------------------------
 
 bool AUnitView::IsPreviewState() const
 {
-	return ViewState == EUnitViewState::Preview;
+	return State == EUnitViewState::Preview;
 }
 
 bool AUnitView::IsNotBuiltState() const
 {
-	return ViewState == EUnitViewState::Initialize;
+	return State == EUnitViewState::Initialize;
 }
-
 
 // -------------------------------------  Setters  --------------------------------------------------
 
 void AUnitView::SetState(const EUnitViewState NewState)
 {
-	ViewState = NewState;
+	State = NewState;
+}
+
+// -------------------------------------  Methods  --------------------------------------------------
+
+void AUnitView::StartAssembling()
+{
+	MovesToAssembleLeft = GetUnitRef()->MovesToAssemble;
+	if (MovesToAssembleLeft > 0)
+	{
+		State = EUnitViewState::Assembling;
+	}
+	else
+	{
+		State = EUnitViewState::Idle;
+	}
+}
+
+void AUnitView::AssembleMoveTick()
+{
+	if (MovesToAssembleLeft > 0)
+	{
+		MovesToAssembleLeft--;
+		if (MovesToAssembleLeft == 0)
+		{
+			State = EUnitViewState::Idle;
+		}
+	}
+}
+
+void AUnitView::StartMoveTick_Implementation()
+{
+	GetUnitRef()->EndUnitViewMoveTick(this);
 }
 

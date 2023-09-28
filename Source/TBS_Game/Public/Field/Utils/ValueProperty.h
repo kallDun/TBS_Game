@@ -1,14 +1,14 @@
 #pragma once
-#include "BuildingProperty.generated.h"
+#include "ValueProperty.generated.h"
 
 USTRUCT(BlueprintType)
-struct FBuildingProperty
+struct FValueProperty
 {
 	GENERATED_BODY()
 
 public:
-	FBuildingProperty() = default;
-	FBuildingProperty(const FName& InPropertyName, const float& InPropertyValue)
+	FValueProperty() = default;
+	FValueProperty(const FName& InPropertyName, const float& InPropertyValue)
 		: Name(InPropertyName)
 		, Value(InPropertyValue) {}
 	
@@ -23,8 +23,8 @@ public:
 		Value = InValue;
 	}
 
-	FBuildingProperty Clone() const
+	FValueProperty Clone() const
 	{
-		return FBuildingProperty(Name, Value);
+		return FValueProperty(Name, Value);
 	}
 };
