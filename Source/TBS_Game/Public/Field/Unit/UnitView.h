@@ -22,8 +22,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void OnInit();
-	
-	// Current state properties
+
+// Current state properties
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated, ReplicatedUsing=OnRep_UnitRef)
 	AUnit* UnitRef;
@@ -36,6 +36,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	EUnitViewState State = EUnitViewState::Initialize;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
+	int MovesToAssembleLeft = 0;
 
 	
 // Getters & Setters
@@ -61,6 +64,11 @@ public:
 	
 // Methods
 public:
+	UFUNCTION()
+	void AssembleMoveTick();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StartMoveTick();
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

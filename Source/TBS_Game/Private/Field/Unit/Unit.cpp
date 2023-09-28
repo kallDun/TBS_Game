@@ -110,3 +110,47 @@ void AUnit::PlacePrefabView()
 	PrefabPreview->StartAssembling();
 	PrefabPreview = nullptr;
 }
+
+// ------------------ Player move ------------------
+
+void AUnit::AssembleMoveTick()
+{
+	for (AUnitView* View : UnitViews)
+	{
+		AssembleUnitViewMoveTick(View);
+	}
+}
+
+void AUnit::AssembleUnitViewMoveTick(AUnitView* UnitView)
+{
+	UnitView->AssembleMoveTick();
+}
+
+void AUnit::StartMoveTick()
+{
+	if (UnitViews.Num() > 0)
+	{
+		StartUnitViewMoveTick(UnitViews[0]);
+	}
+	else EndMoveTick();
+}
+
+void AUnit::StartUnitViewMoveTick(AUnitView* UnitView)
+{
+	UnitView->StartMoveTick();
+}
+
+void AUnit::EndUnitViewMoveTick(AUnitView* UnitView)
+{
+	const int Index = UnitViews.Find(UnitView);
+	if (Index < UnitViews.Num() - 1)
+	{
+		StartUnitViewMoveTick(UnitViews[Index + 1]);
+	}
+	else EndMoveTick();
+}
+
+void AUnit::EndMoveTick()
+{
+	PlayerControllerRef->EndUnitMove(this);
+}

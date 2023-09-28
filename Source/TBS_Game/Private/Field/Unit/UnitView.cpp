@@ -1,7 +1,5 @@
 #include "Field/Unit/UnitView.h"
-
 #include <Net/UnrealNetwork.h>
-
 #include "Field/Controller/FieldController.h"
 #include "Field/Unit/Unit.h"
 
@@ -24,6 +22,7 @@ void AUnitView::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME( AUnitView, CurrentHitPoints );
 	DOREPLIFETIME( AUnitView, CurrentDefence );
 	DOREPLIFETIME( AUnitView, State );
+	DOREPLIFETIME( AUnitView, MovesToAssembleLeft );
 }
 
 // -------------------------------------  Getters  --------------------------------------------------
@@ -49,6 +48,31 @@ void AUnitView::SetState(const EUnitViewState NewState)
 
 void AUnitView::StartAssembling()
 {
-	State = EUnitViewState::Assembling;
+	MovesToAssembleLeft = GetUnitRef()->MovesToAssemble;
+	if (MovesToAssembleLeft > 0)
+	{
+		State = EUnitViewState::Assembling;
+	}
+	else
+	{
+		State = EUnitViewState::Idle;
+	}
+}
+
+void AUnitView::AssembleMoveTick()
+{
+	if (MovesToAssembleLeft > 0)
+	{
+		MovesToAssembleLeft--;
+		if (MovesToAssembleLeft == 0)
+		{
+			State = EUnitViewState::Idle;
+		}
+	}
+}
+
+void AUnitView::StartMoveTick_Implementation()
+{
+	GetUnitRef()->EndUnitViewMoveTick(this);
 }
 

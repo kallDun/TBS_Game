@@ -70,6 +70,28 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	bool CanPlace();
 
+// Player move
+public:
+	UFUNCTION()
+	void AssembleMoveTick();
+
+	UFUNCTION()
+	void StartMoveTick();
+
+	UFUNCTION()
+	void EndUnitViewMoveTick(AUnitView* UnitView);
+
+private:
+	UFUNCTION()
+	void EndMoveTick();
+	
+	UFUNCTION()
+	void StartUnitViewMoveTick(AUnitView* UnitView);
+
+	UFUNCTION()
+	void AssembleUnitViewMoveTick(AUnitView* UnitView);
+
+// Auxiliary
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
