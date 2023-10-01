@@ -95,7 +95,7 @@ private:
 	TArray<AHero*> HeroPrefabs = {};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State")
-	AUnit* Hero;
+	AHero* Hero;
 
 // -------------------------------------------------------------------------------------------
 
