@@ -69,10 +69,10 @@ void AGamePlayerController::InitState_Implementation(const int PlayerNum, const 
 {
 	PlayerNumber = PlayerNum;
 	CenterLocation = CenterHexLocation;
-	InitBuildingPrefabs();
-	InitUnitPrefabs();
 	FieldController->AddPlayerToList(this);
 	PlayerInitializeFinishedBroadcast();
+	InitBuildingPrefabs();
+	InitUnitPrefabs();
 }
 
 void AGamePlayerController::SetActorLocationAndRotation(const FHexagonLocation HexagonLocation, const FRotator& WorldRotation)
@@ -98,6 +98,7 @@ void AGamePlayerController::InitBuildingPrefabs()
 	{
 		BuildingPrefabs.Add(InitBuildingPrefab(BuildingClass));
 	}
+	OnRep_BuildingPrefabs();
 }
 
 ABuilding* AGamePlayerController::InitBuildingPrefab(const TSubclassOf<ABuilding> BuildingClass)
@@ -115,6 +116,7 @@ void AGamePlayerController::InitUnitPrefabs()
 	{
 		Units.Add(InitUnitPrefab(UnitClass));
 	}
+	OnRep_UnitPrefabs();
 }
 
 AUnit* AGamePlayerController::InitUnitPrefab(const TSubclassOf<AUnit> UnitClass)
