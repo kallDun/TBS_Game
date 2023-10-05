@@ -33,6 +33,9 @@ public:
 	EHeroPillarType HeroType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Hero Main")
+	TArray<FName> Abilities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Hero Main")
 	float MaxHitPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hero Main")
