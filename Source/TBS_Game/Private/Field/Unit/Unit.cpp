@@ -30,7 +30,7 @@ void AUnit::StartPreview()
 	PrefabPreview->SetState(EUnitViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
 	CellParamsMap = UCellParamsMapGenerator::New(this);
-	PlayerControllerRef->CellParamsMap = CellParamsMap;
+	PlayerControllerRef->SetCellParamsMap(CellParamsMap);
 }
 
 void AUnit::StopPreview()
@@ -41,7 +41,7 @@ void AUnit::StopPreview()
 		PrefabPreview = nullptr;
 	}
 	CellParamsMap = nullptr;
-	PlayerControllerRef->CellParamsMap = nullptr;
+	PlayerControllerRef->SetCellParamsMap(nullptr);
 }
 
 EUnitPlacementReturnState AUnit::CheckUnitPlacement()

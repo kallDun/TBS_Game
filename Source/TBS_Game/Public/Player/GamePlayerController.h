@@ -108,6 +108,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	APlayerController* GetPlayerController() const { return Cast<APlayerController>(GetController()); }
 
+// Setters
+public:
+	UFUNCTION()
+	void SetCellParamsMap(UCellParamsTwoDimArray* NewCellParamsMap)
+	{
+		CellParamsMap = NewCellParamsMap;
+		OnRep_CellParamsMap();
+	}
 
 // Base overrides
 protected:
