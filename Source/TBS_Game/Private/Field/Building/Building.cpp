@@ -58,7 +58,7 @@ void ABuilding::StartPreview()
 	PrefabPreview->SetState(EBuildingViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
 	CellParamsMap = UCellParamsMapGenerator::New(this);
-	PlayerControllerRef->CellParamsMap = CellParamsMap;
+	PlayerControllerRef->SetCellParamsMap(CellParamsMap);
 }
 
 EBuildingPlacementReturnState ABuilding::SetPreviewLocation(const FHexagonLocation HexagonLocation)
