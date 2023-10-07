@@ -56,6 +56,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	int AvailableUnitsCount = 0;
 
+// Getters & setters
+public:
+	UFUNCTION(BlueprintCallable)
+	void AddAvailableUnitsCount(const int Count)
+	{
+		AvailableUnitsCount += Count;
+	}
+
 // Methods
 public:
 	UFUNCTION(BlueprintCallable)
