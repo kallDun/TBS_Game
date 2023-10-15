@@ -6,7 +6,7 @@
 
 
 TArray<ABuildingView*> UFieldActorsFunctionLibrary::GetBuildingViewsByBehaviourComponent(
-	const UObject* WorldContextObject, const TSubclassOf<UBuildingBehaviourComponent> ComponentClass,
+	const UObject* WorldContextObject, const AGamePlayerController* PlayerOwner, const TSubclassOf<UBuildingBehaviourComponent> ComponentClass,
 	const bool bIncludePreviewActors, const bool bIncludeNotBuiltActors, const ABuilding* NotIncludedBuilding)
 {
 	TArray<AActor*> BuildingViewsActors = {};
@@ -17,15 +17,18 @@ TArray<ABuildingView*> UFieldActorsFunctionLibrary::GetBuildingViewsByBehaviourC
 	{
 		if (ABuildingView* BuildingView = Cast<ABuildingView>(BuildingViewsActor))
 		{
-			if (UActorComponent* Component = BuildingView->GetComponentByClass(ComponentClass))
+			if (BuildingView->GetBuildingRef()->PlayerControllerRef == PlayerOwner)
 			{
-				if (bIncludePreviewActors || !BuildingView->IsPreviewState())
+				if (UActorComponent* Component = BuildingView->GetComponentByClass(ComponentClass))
 				{
-					if (bIncludeNotBuiltActors || !BuildingView->IsNotBuiltState())
+					if (bIncludePreviewActors || !BuildingView->IsPreviewState())
 					{
-						if (NotIncludedBuilding == nullptr || NotIncludedBuilding != BuildingView->GetBuildingRef())
+						if (bIncludeNotBuiltActors || !BuildingView->IsNotBuiltState())
 						{
-							BuildingViews.Add(BuildingView);
+							if (NotIncludedBuilding == nullptr || NotIncludedBuilding != BuildingView->GetBuildingRef())
+							{
+								BuildingViews.Add(BuildingView);
+							}
 						}
 					}
 				}
@@ -35,7 +38,7 @@ TArray<ABuildingView*> UFieldActorsFunctionLibrary::GetBuildingViewsByBehaviourC
 	return BuildingViews;
 }
 
-TArray<ABuildingView*> UFieldActorsFunctionLibrary::GetBuildingViewsByBuildingName(const UObject* WorldContextObject,const FName BuildingName,
+TArray<ABuildingView*> UFieldActorsFunctionLibrary::GetBuildingViewsByBuildingName(const UObject* WorldContextObject, const AGamePlayerController* PlayerOwner, const FName BuildingName,
 	const bool bIncludePreviewActors, const bool bIncludeNotBuiltActors)
 {
 	TArray<AActor*> BuildingViewsActors = {};
@@ -46,13 +49,16 @@ TArray<ABuildingView*> UFieldActorsFunctionLibrary::GetBuildingViewsByBuildingNa
 	{
 		if (ABuildingView* BuildingView = Cast<ABuildingView>(BuildingViewsActor))
 		{
-			if (BuildingView->GetBuildingRef()->Name == BuildingName)
+			if (BuildingView->GetBuildingRef()->PlayerControllerRef == PlayerOwner)
 			{
-				if (bIncludePreviewActors || !BuildingView->IsPreviewState())
+				if (BuildingView->GetBuildingRef()->Name == BuildingName)
 				{
-					if (bIncludeNotBuiltActors || !BuildingView->IsNotBuiltState())
+					if (bIncludePreviewActors || !BuildingView->IsPreviewState())
 					{
-						BuildingViews.Add(BuildingView);
+						if (bIncludeNotBuiltActors || !BuildingView->IsNotBuiltState())
+						{
+							BuildingViews.Add(BuildingView);
+						}
 					}
 				}
 			}
