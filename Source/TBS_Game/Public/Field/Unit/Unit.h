@@ -84,7 +84,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	EUnitPlacementReturnState TryToPlace();
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool CanPlace();
 
 // Player move

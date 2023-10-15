@@ -96,6 +96,11 @@ EUnitPlacementReturnState AUnit::TryToPlace()
 	return EUnitPlacementReturnState::Succeeded;
 }
 
+bool AUnit::CanPlace_Implementation()
+{
+	return true;
+}
+
 bool AUnit::CanPlaceOnLocation(const FHexagonLocation HexagonLocation) const
 {
 	if (CellParamsMap)
