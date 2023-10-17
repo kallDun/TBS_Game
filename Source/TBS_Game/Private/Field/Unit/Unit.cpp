@@ -26,6 +26,11 @@ void AUnit::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 
 void AUnit::StartPreview()
 {
+	if (PrefabPreview)
+	{
+		PrefabPreview->Destroy();
+		PrefabPreview = nullptr;
+	}
 	PrefabPreview = InitUnitView(FHexagonLocation());
 	PrefabPreview->SetState(EUnitViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
@@ -73,8 +78,9 @@ EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation Hexag
 	}
 	PrefabPreview->SetActorHiddenInGame(true);
 
-	const auto ReturnState = CheckUnitPlacement();
-	if (ReturnState != EUnitPlacementReturnState::Succeeded) return ReturnState;
+	if (const auto ReturnState = CheckUnitPlacement();
+		ReturnState != EUnitPlacementReturnState::Succeeded)
+			return ReturnState;
 	
 	if (!CanPlaceOnLocation(HexagonLocation))
 	{
@@ -87,8 +93,9 @@ EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation Hexag
 
 EUnitPlacementReturnState AUnit::TryToPlace()
 {
-	const auto ReturnState = CheckUnitPlacement();
-	if (ReturnState != EUnitPlacementReturnState::Succeeded) return ReturnState;
+	if (const auto ReturnState = CheckUnitPlacement();
+		ReturnState != EUnitPlacementReturnState::Succeeded)
+			return ReturnState;
 	
 	PlacePrefabView();
 	AvailableUnitsCount--;
