@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Main Properties", Replicated)
 	EUnitPillarType UnitType;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Main Properties", Replicated)
+	EUnitAttackType UnitTypeByPillar;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = 1, ClampMax = 10), Category = "Main Properties", Replicated)
 	int Level = 1;
 
@@ -56,6 +59,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "State Properties", Replicated)
 	int AvailableUnitsCount = 0;
 
+// Getters & setters
+public:
+	UFUNCTION(BlueprintCallable)
+	void AddAvailableUnitsCount(const int Count)
+	{
+		AvailableUnitsCount += Count;
+	}
+
 // Methods
 public:
 	UFUNCTION(BlueprintCallable)
@@ -73,7 +84,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	EUnitPlacementReturnState TryToPlace();
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool CanPlace();
 
 // Player move

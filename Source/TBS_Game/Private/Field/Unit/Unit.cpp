@@ -26,11 +26,16 @@ void AUnit::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 
 void AUnit::StartPreview()
 {
+	if (PrefabPreview)
+	{
+		PrefabPreview->Destroy();
+		PrefabPreview = nullptr;
+	}
 	PrefabPreview = InitUnitView(FHexagonLocation());
 	PrefabPreview->SetState(EUnitViewState::Preview);
 	PrefabPreview->SetActorHiddenInGame(true);
 	CellParamsMap = UCellParamsMapGenerator::New(this);
-	PlayerControllerRef->CellParamsMap = CellParamsMap;
+	PlayerControllerRef->SetCellParamsMap(CellParamsMap);
 }
 
 void AUnit::StopPreview()
@@ -41,7 +46,7 @@ void AUnit::StopPreview()
 		PrefabPreview = nullptr;
 	}
 	CellParamsMap = nullptr;
-	PlayerControllerRef->CellParamsMap = nullptr;
+	PlayerControllerRef->SetCellParamsMap(nullptr);
 }
 
 EUnitPlacementReturnState AUnit::CheckUnitPlacement()
@@ -73,8 +78,9 @@ EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation Hexag
 	}
 	PrefabPreview->SetActorHiddenInGame(true);
 
-	const auto ReturnState = CheckUnitPlacement();
-	if (ReturnState != EUnitPlacementReturnState::Succeeded) return ReturnState;
+	if (const auto ReturnState = CheckUnitPlacement();
+		ReturnState != EUnitPlacementReturnState::Succeeded)
+			return ReturnState;
 	
 	if (!CanPlaceOnLocation(HexagonLocation))
 	{
@@ -87,13 +93,19 @@ EUnitPlacementReturnState AUnit::SetPreviewLocation(const FHexagonLocation Hexag
 
 EUnitPlacementReturnState AUnit::TryToPlace()
 {
-	const auto ReturnState = CheckUnitPlacement();
-	if (ReturnState != EUnitPlacementReturnState::Succeeded) return ReturnState;
+	if (const auto ReturnState = CheckUnitPlacement();
+		ReturnState != EUnitPlacementReturnState::Succeeded)
+			return ReturnState;
 	
 	PlacePrefabView();
 	AvailableUnitsCount--;
 	PlayerControllerRef->TryToUseMove();
 	return EUnitPlacementReturnState::Succeeded;
+}
+
+bool AUnit::CanPlace_Implementation()
+{
+	return true;
 }
 
 bool AUnit::CanPlaceOnLocation(const FHexagonLocation HexagonLocation) const

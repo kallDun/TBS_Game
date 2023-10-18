@@ -147,7 +147,7 @@ UCellParamsTwoDimArray* UCellParamsMapGenerator::GetUnitRelatedCellsMapForSingle
 		}
 
 		const int Distance = UHexagonFunctionLibrary::GetDistanceBetweenHexagons(CellRef->GetLocation(), SingleAnchor.Location);
-		const int ImproveLevel = CalculateImprovementLevel(CellRef, Unit, SingleAnchor, Distance);		
+		const int ImproveLevel = CalculateImprovementLevel(CellRef, Unit, SingleAnchor, Distance);
 		if (CellParametersType == ECellParametersType::Free && ImproveLevel < SingleAnchor.MaximumDebuffLevelToBuild)
 		{
 			CellParametersType = ECellParametersType::ForbiddenByDebuffLevel;
@@ -184,12 +184,12 @@ int UCellParamsMapGenerator::CalculateImprovementLevel(const ACell* Cell, const 
 {
 	const FSingleTerrainRule Rule = Actor->TerrainRules.GetTerrainRule(Cell->GetTerrainType());
 	const int BuildingRadius = SingleAnchor.Radius + Rule.BuildingRadiusAddition;
-	int ImprovementLevel;	
+	int ImprovementLevel;
 	if (Distance > BuildingRadius)
 	{
 		const int Distance2 = Distance - BuildingRadius;
 		ImprovementLevel = -1 - ((Distance2 - 1) / Actor->GetFieldController()->GetDecreasingImproveLevelByRadius());		
-	}
+	} 
 	else
 	{
 		ImprovementLevel = Distance <= 1 ? 1 : 0;

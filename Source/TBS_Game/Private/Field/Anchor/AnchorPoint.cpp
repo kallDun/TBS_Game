@@ -29,9 +29,9 @@ TArray<FSingleAnchorData> FAnchorPoint::GetAnchors(const AFieldActorsHandler* Ac
 		|| PointType == EAnchorPointType::BuildingName)
 	{
 		TArray<ABuildingView*> BuildingViews = PointType == EAnchorPointType::BehaviourComponent
-			? UFieldActorsFunctionLibrary::GetBuildingViewsByBehaviourComponent(Actor, BuildingBehaviourClass,
+			? UFieldActorsFunctionLibrary::GetBuildingViewsByBehaviourComponent(Actor, Actor->PlayerControllerRef, BuildingBehaviourClass,
 				false, false, Cast<ABuilding>(Actor))
-			: UFieldActorsFunctionLibrary::GetBuildingViewsByBuildingName(Actor, BuildingName, false, false);
+			: UFieldActorsFunctionLibrary::GetBuildingViewsByBuildingName(Actor, Actor->PlayerControllerRef, BuildingName, false, false);
 		
 		for (const ABuildingView* BuildingView : BuildingViews)
 		{

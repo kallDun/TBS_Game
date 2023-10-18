@@ -3,6 +3,7 @@
 #include "Field/HexagonLocation.h"
 #include "FieldActorsFunctionLibrary.generated.h"
 
+class AGamePlayerController;
 class AFieldActor;
 class ABuilding;
 class UBuildingBehaviourComponent;
@@ -15,11 +16,11 @@ class TBS_GAME_API UFieldActorsFunctionLibrary : public UBlueprintFunctionLibrar
 
 public:
 	UFUNCTION(BlueprintCallable)
-	static TArray<ABuildingView*> GetBuildingViewsByBehaviourComponent(const UObject* WorldContextObject,const TSubclassOf<UBuildingBehaviourComponent> ComponentClass,
+	static TArray<ABuildingView*> GetBuildingViewsByBehaviourComponent(const UObject* WorldContextObject, const AGamePlayerController* PlayerOwner,const TSubclassOf<UBuildingBehaviourComponent> ComponentClass,
 		const bool bIncludePreviewActors = false, const bool bIncludeNotBuiltActors = true, const ABuilding* NotIncludedBuilding = nullptr);
 
 	UFUNCTION(BlueprintCallable)
-	static TArray<ABuildingView*> GetBuildingViewsByBuildingName(const UObject* WorldContextObject,const FName BuildingName,
+	static TArray<ABuildingView*> GetBuildingViewsByBuildingName(const UObject* WorldContextObject, const AGamePlayerController* PlayerOwner,const FName BuildingName,
 		const bool bIncludePreviewActors = false, const bool bIncludeNotBuiltActors = true);
 
 	UFUNCTION(BlueprintCallable)
